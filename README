@@ -7,11 +7,36 @@ running the pipeline.
 
 INSTALLING SOFTWARE
 
-1. Install this directory using github.
+1. Install this directory using github:
+
+git clone https://github.com/nhansen/AlphaThal.git
+
+2. Do all that is necessary to get the sratoolkit running for you on
+biowulf (see https://hpc.nih.gov/apps/sratoolkit.html)
 
 PREPARING TARGET FILES
 
+The first part of the pipeline requires some files to tell it what
+regions of the genome you would like reads from. Essentially, you want
+to create bed and fasta files for unique flanking regions that surround
+your (possibly repetitive) targeted parts of the reference, ensuring
+that the length of the targeted regions (allowing for variation) from
+start to end are roughly the length of the long reads you are targeting.
+The files you will need should be placed in the "prep" subdirectory of
+this repository, and are:
 
+ref_and_nonref.flank.fasta - a FASTA file, drawn from the reference
+(must use hg19 at this point), with left and right flanking regions.
+the fasta entry names should be of the form "<chr>_<start>_<end>" where
+these values reflect the 1-based coordinates of the region in the entry.
+
+all_baits.bed - a BED file of the regions between the flanking regions
+in the previous file, 0 based. After the three columns for chromosome,
+start, and end, add two more (tab-delimited columns): the fourth column
+should be a string describing the targeted sequence (e.g., "LTR5B"), and
+the fifth column should be a string uniquely identifying that particular
+targeted region. So the fourth column can contain non-unique values, but
+the fifth column must have values that are unique for each row of the file.
 
 RUNNING THE PIPELINE
 
@@ -20,6 +45,10 @@ have this directory, e.g.,:
 
 export LONGREADTOPDIR=/data/nhansen/HERV_K_catalog/AlphaThal
 
+3. To launch biowulf jobs to cull reads from a particular SRA biosample,
+run the following command:
+
+$LONGREADTOPDIR/scripts/run_hervk_pipeline.pl --flankseqs $LONGREADTOPDIR/prep/ref_and_nonref.flank.fasta --baitregions $LONGREADTOPDIR/prep/all_baits.bed <BIOSAMPLE> <SAMPLE DIRECTORY>
 
 
 
