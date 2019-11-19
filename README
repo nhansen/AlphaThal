@@ -55,4 +55,9 @@ run the following command:
 
 $LONGREADTOPDIR/scripts/run_hervk_pipeline.pl --flankseqs $LONGREADTOPDIR/prep/ref_and_nonref.flank.fasta --baitregions $LONGREADTOPDIR/prep/all_baits.bed --scripts $LONGREADTOPDIR/scripts <BIOSAMPLE> <SAMPLE DIRECTORY>
 
+where <BIOSAMPLE> is the biosample name for your sample shown in the output
+of sh.samplecoverage (e.g., SAMN04325239) and <SAMPLE DIRECTORY> is the full
+path to a subdirectory of your "refgenotype" directory, where results for
+this sample will be written.
+
 
