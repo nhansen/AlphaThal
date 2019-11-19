@@ -1,0 +1,25 @@
+Long Read Pipeline Notes, November 19, 2019:
+
+Scripts in this directory can be used to run the long read pipeline
+to retrieve publicly available long reads from the SRA matching a
+specific target. These are instructions in preparing to run and
+running the pipeline.
+
+INSTALLING SOFTWARE
+
+1. Install this directory using github.
+
+PREPARING TARGET FILES
+
+
+
+RUNNING THE PIPELINE
+
+1. Set the environment variable LONGREADTOPDIR to the path to where you 
+have this directory, e.g.,:
+
+export LONGREADTOPDIR=/data/nhansen/HERV_K_catalog/AlphaThal
+
+
+
+
