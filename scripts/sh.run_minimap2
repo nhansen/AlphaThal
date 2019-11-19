@@ -1,0 +1,18 @@
+#!/bin/bash
+
+module load samtools
+module load minimap2
+
+export QUERYFASTA=$1
+export REFFASTA=/fdb/genome/hg19/hg19.fa
+export REFINDEX=hg19.mmi
+
+export BASE=`echo $QUERYFASTA | sed 's:.*/::' | sed 's/.fasta//'`
+export TASKS=${SLURM_CPUS_PER_TASK:-2}
+
+minimap2 -ax map-pb -t $TASKS $REFFASTA $QUERYFASTA > $BASE.minimap.hg19.sam
+samtools view -bS $BASE.minimap.hg19.sam -o $BASE.minimap.hg19.bam
+samtools sort $BASE.minimap.hg19.bam -o $BASE.minimap.hg19.sort.bam
+samtools index $BASE.minimap.hg19.sort.bam
+
+rm $BASE.minimap.hg19.sam $BASE.minimap.hg19.bam

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+module load smrtanalysis
+module load samtools
+
+export HERVDIR=$1
+export SRRACC=$2
+export PLATFORM=$3
+
+cd $HERVDIR;
+
+if [ -e $SRRACC\_hdf5.tgz ]; then
+    mkdir $SRRACC;
+    cd $SRRACC;
+
+    gunzip -c ../$SRRACC\_hdf5.tgz | tar xf -;
+
+    bax2bam *.bax.h5 -o $SRRACC;
+    bam2fasta -o $SRRACC $SRRACC.subreads.bam;
+    bam2fastq -o $SRRACC $SRRACC.subreads.bam;
+    gunzip -c $SRRACC.fasta.gz | bgzip -c > ../$SRRACC.fasta.gz
+    samtools faidx ../$SRRACC.fasta.gz
+    rm $SRRACC.fasta.gz
+    mv $SRRACC.fastq.gz ../
+    rm *.bax.h5
+    rm *.scraps.bam*
+    rm ../$SRRACC\_hdf5.tgz
+else
+    # poor man's fastq2fasta:
+    
+    gunzip -c $SRRACC.fastq.gz | awk 'NR==4*int(NR/4)+1 || NR==4*int(NR/4)+2 {print}' | sed 's/^@/>/' | bgzip -c > $SRRACC.fasta.gz
+    samtools faidx $SRRACC.fasta.gz
+fi
+

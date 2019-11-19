@@ -1,0 +1,42 @@
+#!/bin/bash
+
+### TODO: evaluate and improve LTR sequences in LTR_sequences.fasta? ###
+
+module load gcc/4.9.4
+module load samtools
+
+export SRRFASTA=$1
+export SEQUENCES=$2
+export PI=$3
+export SEQLENGTH=$4
+# Optional argument can pass the filename of consensus sequence of the repeat element so reads not matching flanks can be kept:
+export OPTELEMENTSEQ=$5 
+
+export OUTPUT=`echo $SRRFASTA.mashmap$PI.out | sed 's:.*/::' | sed 's/.fasta//'`
+export SCRIPTDIR=$LONGREADTOPDIR/scripts
+export TASKS=${SLURM_CPUS_PER_TASK:-2}
+
+# Discovery notes:
+# 040618 -- pi 80, SEQFILE=LTR_sequences.fasta
+# 041618 -- pi 80, SEQFILE=HERV_K_sequences.fasta
+# 042218 -- pi 80, s 2000, SEQFILE=HERV_K_sequences_041918.fasta
+# Also tried pi 85 with above parameters and with s 1000
+/home/nhansen/mashmap/mashmap-Linux64-v2.0/mashmap -r $SEQUENCES -q $SRRFASTA -t $TASKS --pi $PI -s $SEQLENGTH -o $OUTPUT
+
+if [[ $OPTELEMENTSEQ != "" ]]; then
+    export OUTPUTREPEATS=`echo $SRRFASTA.mashmap85.repeatelement.out | sed 's:.*/::' | sed 's/.fasta//'`
+    /home/nhansen/mashmap/mashmap-Linux64-v2.0/mashmap -r $OPTELEMENTSEQ -q $SRRFASTA -t $TASKS --pi 85 -s 500 -o $OUTPUTREPEATS
+fi
+
+export SRRFASTA=`echo $SRRFASTA | sed 's/\.gz//'`
+export READNAMEFILE=`echo $SRRFASTA.mashmap.readnames | sed 's:.*/::' | sed 's/.fasta//'`
+export MATCHREADFILEGZ=`echo $SRRFASTA.mashmap.fasta.gz | sed 's:.*/::' | sed 's/.fasta//'`
+export MATCHREADFASTQGZ=`echo $SRRFASTA.mashmap.fastq.gz | sed 's:.*/::' | sed 's/.fasta//'`
+export SRRFASTQ=`echo $SRRFASTA.gz | sed 's/.fasta/.fastq/'`
+
+awk '{print $1}' $OUTPUT | sort | uniq > $READNAMEFILE;
+$SCRIPTDIR/pull_reads_from_fastq.pl $READNAMEFILE $SRRFASTQ | gzip -c > $MATCHREADFASTQGZ
+
+gunzip -c $MATCHREADFASTQGZ | awk 'NR==4*int(NR/4)+1 || NR==4*int(NR/4)+2 {print}' | sed 's/^@/>/' | bgzip -c > $MATCHREADFILEGZ
+
+rm $SRRFASTQ

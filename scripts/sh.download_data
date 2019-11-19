@@ -1,0 +1,27 @@
+#!/bin/bash
+
+module load sratoolkit/2.9.6
+
+export HERVDIR=$1
+export SRRACC=$2
+export PLATFORM=$3
+
+cd $HERVDIR;
+
+export URL=""
+
+# check for hdf5 files unless platform is Sequel or Sequel II:
+if [[ "$PLATFORM" != "Sequel" && "$PLATFORM" != "Sequel II" ]]; then
+    echo "Attempting to fetch URL for platform $PLATFORM"
+    export URL=`srapath $SRRACC -f names --raw -p typ=srapub_files -p accept-proto=https | grep 'srapub_files' | grep 'hdf5.tgz' | cut -d '|' -f 8`
+fi
+
+if [[ $URL != "" ]]; then
+    echo "Downloading "$URL
+    wget $URL;
+else
+    echo "No URL--using prefetch to get "$SRRACC
+    prefetch $SRRACC
+    fastq-dump --gzip $SRRACC
+fi
+
