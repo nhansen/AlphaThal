@@ -45,6 +45,11 @@ have this directory, e.g.,:
 
 export LONGREADTOPDIR=/data/nhansen/HERV_K_catalog/AlphaThal
 
+2. Determine the sample you will run the pipeline on. You can view samples,
+along with their coverage, by typing
+
+$LONGREADTOPDIR/scripts/sh.samplecoverage
+
 3. To launch biowulf jobs to cull reads from a particular SRA biosample,
 run the following command:
 
