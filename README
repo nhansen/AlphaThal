@@ -53,6 +53,6 @@ $LONGREADTOPDIR/scripts/sh.samplecoverage
 3. To launch biowulf jobs to cull reads from a particular SRA biosample,
 run the following command:
 
-$LONGREADTOPDIR/scripts/run_hervk_pipeline.pl --flankseqs $LONGREADTOPDIR/prep/ref_and_nonref.flank.fasta --baitregions $LONGREADTOPDIR/prep/all_baits.bed <BIOSAMPLE> <SAMPLE DIRECTORY>
+$LONGREADTOPDIR/scripts/run_hervk_pipeline.pl --flankseqs $LONGREADTOPDIR/prep/ref_and_nonref.flank.fasta --baitregions $LONGREADTOPDIR/prep/all_baits.bed --scripts $LONGREADTOPDIR/scripts <BIOSAMPLE> <SAMPLE DIRECTORY>
 
 
