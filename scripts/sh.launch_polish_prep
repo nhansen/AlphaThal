@@ -1,0 +1,59 @@
+#!/bin/bash
+
+module load samtools
+
+# canu and wtdbg assemblies are finished
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+
+export MAINSCRIPTDIR=/data/nhansen/HERV_K_catalog/scripts
+export SCRIPTDIR=/data/nhansen/HERV_K_catalog/discovery2/scripts
+
+# create files of all of the contigs from canu and wtdbg assemblies:
+
+mkdir -p $SAMPLEDIR/consensus_seqs
+for herv in `ls -d $SAMPLEDIR/wtdbg/[RN]HK*`; do
+    export HERV=`echo $herv | sed 's:.*/::'`;
+    if [ -e $herv/$HERV.ctg.fa ]; then
+        sed 's/>/>'$HERV'.wtdbg./' $herv/$HERV.ctg.fa;
+    fi
+done > $SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg_contigs.fasta
+
+samtools faidx $SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg_contigs.fasta
+
+for herv in `ls -d $SAMPLEDIR/canu/[RN]HK*`; do
+    export HERV=`echo $herv | sed 's:.*/::'`;
+    if [ -e $herv/$HERV.contigs.fasta ]; then
+        sed 's/>/>'$HERV'.canu./' $herv/$HERV.contigs.fasta;
+    fi
+done > $SAMPLEDIR/consensus_seqs/$SAMPLE.canu_contigs.fasta
+
+samtools faidx $SAMPLEDIR/consensus_seqs/$SAMPLE.canu_contigs.fasta
+
+# create dataset xmls:
+cd $SAMPLEDIR/SRA_data
+export COMMANDS=`mktemp dataset.XXXXXX`
+
+for smrtcell in `ls *.fasta.gz | sed 's/.fasta.gz//'`; do
+    echo "dataset create $smrtcell.readset.xml $SAMPLEDIR/SRA_data/$smrtcell/$smrtcell.subreads.bam; dataset filter $smrtcell.readset.xml $SAMPLEDIR/SRA_data/$smrtcell.hervk.readset.xml qname=$SAMPLEDIR/MASHmap/$smrtcell.mashmap.readnames"
+done > $COMMANDS
+
+swarm -f $COMMANDS --module smrtanalysis > dataset.swarmsubmitjobid.out;
+export DATASETJOBID=`awk '{print $1}' dataset.swarmsubmitjobid.out`
+
+export COMMANDS=`mktemp pbalign.XXXXXX`
+
+for smrtcell in `ls *.fasta.gz | sed 's/.fasta.gz//'`; do
+    export CANUREF=$SAMPLEDIR/consensus_seqs/$SAMPLE.canu_contigs.fasta;
+    export WTDBGREF=$SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg_contigs.fasta;
+    echo "pbalign --nproc \$SLURM_CPUS_PER_TASK $SAMPLEDIR/SRA_data/$smrtcell.hervk.readset.xml $CANUREF $SAMPLEDIR/SRA_data/$smrtcell.hervk.aligned.canu.bam"
+    echo "pbalign --nproc \$SLURM_CPUS_PER_TASK $SAMPLEDIR/SRA_data/$smrtcell.hervk.readset.xml $WTDBGREF $SAMPLEDIR/SRA_data/$smrtcell.hervk.aligned.wtdbg.bam"
+done > $COMMANDS
+
+swarm -f $COMMANDS --dependency=afterok:$DATASETJOBID --module smrtanalysis -g 16 --time 6:00:00 -t 8 > pbalign.swarmsubmitjobid.out;
+export PBALIGNJOBID=`awk '{print $1}' pbalign.swarmsubmitjobid.out`
+
+sbatch --dependency=afterok:$PBALIGNJOBID $SCRIPTDIR/sh.launch_polish_assemblies $SAMPLE $SAMPLEDIR > polish.sbatchsubmitjobid.out
+export POLISHJOBID=`awk '{print $1}' polish.sbatchsubmitjobid.out`
+

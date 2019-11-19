@@ -1,0 +1,16 @@
+#!/bin/bash
+
+module load samtools
+
+export HERVKID=$1
+# DIRNAME is top "merge" directory
+export DIRNAME=$2
+
+export SCRIPTSDIR=/data/nhansen/HERV_K_catalog/discovery2/scripts
+export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
+export PATH=$PATH:/home/nhansen/projects/wtdbg/wtdbg-2.3_x64_linux
+
+cd $DIRNAME
+
+$SCRIPTSDIR/assemble_alternate_alleles.pl $HERVKID $DIRNAME > $DIRNAME/logs/$HERVKID.runwtdbg.out
+

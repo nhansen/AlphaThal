@@ -1,0 +1,38 @@
+#!/bin/bash
+
+module load mummer/3.9.4alpha
+module load samtools/0.1.19
+
+export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
+
+# ALTNAME is name of alternate allele (e.g., RHK23.ALT1)
+export ALTNAME=$1
+
+# TOPMERGEDIR is path to directory under mergedSVs:
+export TOPMERGEDIR=$2
+
+cd $TOPMERGEDIR/align
+
+export QUERYFASTA=$TOPMERGEDIR/assemble/$ALTNAME/$ALTNAME.reads.fasta
+export PREREFFASTA=$TOPMERGEDIR/assemble/$ALTNAME/$ALTNAME.ctg.fa
+export REFFASTA=$TOPMERGEDIR/assemble/$ALTNAME/$ALTNAME.ref.fa
+
+samtools faidx $PREREFFASTA ctg1 | sed "s/ctg1/$ALTNAME/" > $REFFASTA
+
+echo "nucmer --maxmatch -l 100 -c 500 -p "$ALTNAME $REFFASTA $QUERYFASTA
+
+nucmer --maxmatch -l 100 -c 500 -p $ALTNAME $REFFASTA $QUERYFASTA
+dnadiff -p $ALTNAME -d $ALTNAME.delta
+delta-filter -q $ALTNAME.delta > $ALTNAME.qdelta
+show-coords -rclTH $ALTNAME.qdelta > $ALTNAME.qcoords
+
+echo "/home/nhansen/SVanalyzer/scripts/delta2sam.pl --delta "$ALTNAME".qdelta --query_fasta "$QUERYFASTA" --ref_fasta "$REFFASTA" --out "$ALTNAME".sam"
+
+/home/nhansen/SVanalyzer/scripts/delta2sam.pl --delta $ALTNAME.qdelta --query_fasta $QUERYFASTA --ref_fasta $REFFASTA --out $ALTNAME.sam
+
+samtools view -bS $ALTNAME.sam -o $ALTNAME.bam
+samtools sort $ALTNAME.bam $ALTNAME.sort
+samtools index $ALTNAME.sort.bam
+
+#rm $ALTNAME.sam $ALTNAME.fullheader.sam $ALTNAME.fullheader.bam
+

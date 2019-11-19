@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export PAF=$1
+export STATS=`echo $PAF | sed 's/.paf/.callstats/'`
+
+sort -k6,6 -k8,8n $PAF | paftools.js call -f /fdb/genome/hg19/hg19.fa - > $STATS

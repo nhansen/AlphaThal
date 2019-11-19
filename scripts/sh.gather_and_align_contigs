@@ -1,0 +1,14 @@
+#!/bin/bash
+# request 16 g for minimap2
+
+export SAMPLE=$1
+export HERVDIR=/data/nhansen/HERV_K_catalog/discovery2/refgenotype
+export MAINSCRIPTS=/data/nhansen/HERV_K_catalog/scripts
+
+cd $HERVDIR/$SAMPLE/wtdbg
+for refherv in `ls -d $HERVDIR/$SAMPLE/wtdbg/RHK[1-9]* | sed 's:.*/::'`; do
+    sed "s/ctg/$refherv.ctg/" $HERVDIR/$SAMPLE/wtdbg/$refherv/$refherv.ctg.fa;
+done > $HERVDIR/$SAMPLE/wtdbg/$SAMPLE.assembly_contigs.fasta
+
+$MAINSCRIPTS/sh.run_mm2_on_contigs $HERVDIR/$SAMPLE/wtdbg/$SAMPLE.assembly_contigs.fasta
+

@@ -1,0 +1,20 @@
+#!/bin/bash
+# request 16g memory (for now)
+
+module load samtools
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+export BAITREGIONS=$3
+
+export TARGETNAME=SVA_discovery
+
+#export BAITREGIONS=/data/nhansen/HERV_K_catalog/$TARGETNAME/prep/anchor_baits/all_baits.bed
+export SAMPLEBAM=$SAMPLEDIR/minimap2/$SAMPLE.allreads.minimap.hg19.bam
+
+export SCRIPTS=/data/nhansen/HERV_K_catalog/$TARGETNAME/scripts
+
+mkdir -p $SAMPLEDIR/ReadData
+cd $SAMPLEDIR/ReadData
+
+$SCRIPTS/create_read_table.pl $BAITREGIONS $SAMPLEBAM $SAMPLEDIR/MASHmap/ > $SAMPLE.read_table.txt

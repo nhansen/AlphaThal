@@ -1,0 +1,54 @@
+#!/bin/bash
+
+module load smrtanalysis
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+
+export MAINSCRIPTDIR=/data/nhansen/HERV_K_catalog/scripts
+export SCRIPTDIR=/data/nhansen/HERV_K_catalog/discovery2/scripts
+
+export CANUREF=$SAMPLEDIR/consensus_seqs/$SAMPLE.canu_contigs.fasta
+export WTDBGREF=$SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg_contigs.fasta
+
+for alignedbam in `ls $SAMPLEDIR/SRA_data/*.hervk.aligned.*.bam | sed 's:.*/::'`; do
+    export ALIGNEDXML=`echo $alignedbam | sed 's/.bam/.xml/'`;
+    dataset create $SAMPLEDIR/SRA_data/$ALIGNEDXML $SAMPLEDIR/SRA_data/$alignedbam;
+done
+
+cd $SAMPLEDIR/consensus_seqs;
+dataset merge $SAMPLE.hervk.aligned.canu.merged.xml $SAMPLEDIR/SRA_data/*.hervk.aligned.canu.xml
+dataset merge $SAMPLE.hervk.aligned.wtdbg.merged.xml $SAMPLEDIR/SRA_data/*.hervk.aligned.wtdbg.xml
+
+dataset split --contigs --chunks 8 $SAMPLE.hervk.aligned.canu.merged.xml
+dataset split --contigs --chunks 8 $SAMPLE.hervk.aligned.wtdbg.merged.xml
+
+export COMMANDS=`mktemp polish.XXXXXX`;
+
+rm -f $COMMANDS
+for file in `ls $SAMPLE.hervk.aligned.canu.merged.chunk*.xml`; do
+    export CONSENSUS=`echo $file | sed 's/\.xml/\.consensus.fasta/'`
+    echo "variantCaller --alignmentSetRefWindows --referenceFilename $CANUREF --outputFilename $CONSENSUS --algorithm quiver $file" >> $COMMANDS
+done
+
+for file in `ls $SAMPLE.hervk.aligned.wtdbg.merged.chunk*.xml`; do
+    export CONSENSUS=`echo $file | sed 's/\.xml/\.consensus.fasta/'`
+    echo "variantCaller --alignmentSetRefWindows --referenceFilename $WTDBGREF --outputFilename $CONSENSUS --algorithm quiver $file" >> $COMMANDS
+done
+
+if [ -s $COMMANDS ]; then
+    swarm -f $COMMANDS -g 16 --maxrunning 50 --time 16:00:00 > $COMMANDS.swarmsubmit.out;
+    export POLISHJOBID=`awk '{print $1}' $COMMANDS.swarmsubmit.out`;
+else
+    echo "No commands to submit";
+    rm $COMMANDS;
+fi
+
+sbatch --dependency=afterok:$POLISHJOBID $SCRIPTDIR/sh.combine_polished_fastas $SAMPLE $SAMPLEDIR > combine.sbatchsubmitjobid.out
+export COMBINEJOBID=`awk '{print $1}' combine.sbatchsubmitjobid.out`
+
+sbatch --dependency=afterok:$COMBINEJOBID $MAINSCRIPTDIR/sh.generate_mm2_contig_paf $SAMPLEDIR/consensus_seqs/$SAMPLE.canu_contigs.fasta
+sbatch --dependency=afterok:$COMBINEJOBID $MAINSCRIPTDIR/sh.generate_mm2_contig_paf $SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg_contigs.fasta
+sbatch --dependency=afterok:$COMBINEJOBID $MAINSCRIPTDIR/sh.generate_mm2_contig_paf $SAMPLEDIR/consensus_seqs/$SAMPLE.canu.polishedcontigs.fasta
+sbatch --dependency=afterok:$COMBINEJOBID $MAINSCRIPTDIR/sh.generate_mm2_contig_paf $SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg.polishedcontigs.fasta
+

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+
+export TARGETNAME=SVA_discovery
+
+export SCRIPTSDIR=/data/nhansen/HERV_K_catalog/$TARGETNAME/scripts
+
+export COMMANDS=`mktemp canu_commands.XXXXXX`;
+
+mkdir -p $SAMPLEDIR/canu_correct;
+cd $SAMPLEDIR/canu_correct;
+
+rm -f $COMMANDS
+
+for target in `awk '{print $1}' $SAMPLEDIR/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do 
+    echo "$SCRIPTSDIR/sh.run_canu_correct $SAMPLE $target" >> $COMMANDS;
+done
+
+if [ -s $COMMANDS ]; then
+    swarm -f $COMMANDS -g 16 -t 4 --maxrunning 50 > canu.swarmsubmit.out;
+else
+    echo "No commands to submit";
+    rm $COMMANDS;
+fi

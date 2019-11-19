@@ -1,0 +1,30 @@
+#!/bin/bash
+
+export TARGETID=$1
+export DIRNAME=$2 # this is a subdirectory of the mergedSVs directory for the project
+
+export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
+
+export REFGENODIR=/data/nhansen/HERV_K_catalog/SVA_discovery/refgenotype
+export REFFILE=/data/nhansen/HERV_K_catalog/SVA_discovery/prep/allele_sequences/$TARGETID.widerregion.fasta
+
+cd $REFGENODIR/mergedSVs
+
+export HEADER=$REFGENODIR/mergedSVs/header.vcf
+
+mkdir -p $DIRNAME
+cd $DIRNAME
+
+rm -f $TARGETID.merged.vcf $TARGETID.merged.sorted.vcf
+for file in `ls $REFGENODIR/*.SAMN*/allele_aligns/$TARGETID.labeled.vcf.gz`; do
+    echo $file;
+
+    gunzip -c $file | grep -v '#' >> $TARGETID.merged.vcf
+done
+
+cat $HEADER > $TARGETID.merged.sorted.vcf
+sort -k1,1 -k2,2n $TARGETID.merged.vcf >> $TARGETID.merged.sorted.vcf
+
+/home/nhansen/SVanalyzer/scripts/SVmerge --variants $TARGETID.merged.sorted.vcf --ref $REFFILE --prefix $TARGETID.merged.sorted
+
+/home/nhansen/SVanalyzer/scripts/misc/vcf2tdf.pl --vcf $TARGETID.merged.sorted.clustered.vcf > $TARGETID.merged.sorted.clustered.svs.tdf

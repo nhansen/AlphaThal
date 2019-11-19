@@ -1,0 +1,17 @@
+#!/bin/bash
+
+module load samtools
+
+export HERVKID=$1
+
+export ANNOTDIR=/data/nhansen/HERV_K_catalog/annotation
+export REGIONDIR=/data/nhansen/HERV_K_catalog/discovery2/prep/allele_sequences
+export HERVKFASTA=$REGIONDIR/$HERVKID.widerregion.fasta
+
+if [ -s $HERVKFASTA ]; then
+    cross_match -tags $HERVKFASTA $ANNOTDIR/gag.fasta > $HERVKID.gag.cm.out
+    cross_match -tags $HERVKFASTA $ANNOTDIR/pol.fasta > $HERVKID.pol.cm.out
+    cross_match -tags $HERVKFASTA $ANNOTDIR/recDelta.fasta > $HERVKID.recDelta.cm.out
+    cross_match -tags $HERVKFASTA $ANNOTDIR/env.fasta > $HERVKID.env.cm.out
+    cross_match -tags $HERVKFASTA $ANNOTDIR/LTR_seqs.fasta > $HERVKID.LTR_seqs.cm.out
+fi

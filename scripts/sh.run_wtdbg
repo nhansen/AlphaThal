@@ -1,0 +1,29 @@
+#!/bin/bash
+
+module load samtools
+
+export SAMPLE=$1
+export REFHERV=$2
+
+export HERVDIR=/data/nhansen/HERV_K_catalog/discovery2/refgenotype
+
+export WTDBG=/home/nhansen/projects/wtdbg/wtdbg-2.3_x64_linux/wtdbg2
+export WTDBGCONS=/home/nhansen/projects/wtdbg/wtdbg-2.3_x64_linux/wtpoa-cns
+
+export ALLREADFASTA=$HERVDIR/$SAMPLE/MASHmap/$SAMPLE.mashmap85.all_reads.fasta.gz
+
+cd $HERVDIR/$SAMPLE
+
+mkdir -p $HERVDIR/$SAMPLE/wtdbg
+mkdir -p $HERVDIR/$SAMPLE/wtdbg/$REFHERV
+cd $HERVDIR/$SAMPLE/wtdbg/$REFHERV
+
+rm -f $HERVDIR/$SAMPLE/wtdbg/$REFHERV/$REFHERV.mashmapreads.fasta
+for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] {print $2}' $HERVDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
+    echo $ALLREADFASTA $readname
+    samtools faidx $ALLREADFASTA $readname >> $HERVDIR/$SAMPLE/wtdbg/$REFHERV/$REFHERV.mashmapreads.fasta
+done
+
+$WTDBG -i $HERVDIR/$SAMPLE/wtdbg/$REFHERV/$REFHERV.mashmapreads.fasta -fo $REFHERV -g 20000 -x rs -t 2
+$WTDBGCONS -t 2 -i $REFHERV.ctg.lay.gz -fo $REFHERV.ctg.fa
+

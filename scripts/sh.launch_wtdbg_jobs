@@ -1,0 +1,24 @@
+#!/bin/bash
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+
+export SCRIPTSDIR=/data/nhansen/HERV_K_catalog/discovery2/scripts
+
+export COMMANDS=`mktemp wtdbg_commands.XXXXXX`;
+
+mkdir -p $SAMPLEDIR/wtdbg;
+cd $SAMPLEDIR/wtdbg;
+
+rm -f $COMMANDS
+
+for refherv in `awk '{print $1}' $SAMPLEDIR/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do 
+    echo "$SCRIPTSDIR/sh.run_wtdbg $SAMPLE $refherv" >> $COMMANDS;
+done
+
+if [ -s $COMMANDS ]; then
+    swarm -f $COMMANDS -g 16 -t 4 --maxrunning 50 > wtdbg.swarmsubmit.out;
+else
+    echo "No commands to submit";
+    rm $COMMANDS;
+fi

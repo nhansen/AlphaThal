@@ -1,0 +1,13 @@
+#!/bin/bash
+
+module load samtools
+
+export SAMPLE=$1
+export HERVKID=$2
+
+export RGDIR=/data/nhansen/HERV_K_catalog/discovery2/refgenotype
+
+export VCF=$RGDIR/$SAMPLE/allele_aligns/$HERVKID.vcf.gz
+
+gunzip -c $VCF | grep -v '#' | awk -F"\t" '{OFS="\t"; $3=ENVIRON["SAMPLE"]"."ENVIRON["HERVKID"]"."NR; print}' | bgzip -c > $RGDIR/$SAMPLE/allele_aligns/$HERVKID.labeled.vcf.gz
+

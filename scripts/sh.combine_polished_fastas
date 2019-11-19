@@ -1,0 +1,15 @@
+#!/bin/bash
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+
+for chunkxml in `ls -t $SAMPLEDIR/consensus_seqs/$SAMPLE.hervk.aligned.canu.merged.chunk*.xml`; do
+    export FASTA=`echo $chunkxml | sed 's/.xml/.consensus.fasta/'`;
+    cat $FASTA;
+done > $SAMPLEDIR/consensus_seqs/$SAMPLE.canu.polishedcontigs.fasta
+
+for chunkxml in `ls -t $SAMPLEDIR/consensus_seqs/$SAMPLE.hervk.aligned.wtdbg.merged.chunk*.xml`; do
+    export FASTA=`echo $chunkxml | sed 's/.xml/.consensus.fasta/'`;
+    cat $FASTA;
+done > $SAMPLEDIR/consensus_seqs/$SAMPLE.wtdbg.polishedcontigs.fasta
+

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+module load samtools
+
+export SAMPLE=$1
+export SAMPLEDIR=$2
+
+cd $SAMPLEDIR/allele_aligns
+samtools merge $SAMPLE.hg19.bam *.fullheader.sort.bam -f
+samtools sort $SAMPLE.hg19.bam -o $SAMPLE.hg19.sort.bam
+samtools index $SAMPLE.hg19.sort.bam
+

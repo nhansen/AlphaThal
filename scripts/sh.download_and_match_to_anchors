@@ -1,0 +1,31 @@
+#!/bin/bash
+# request 16g memory (for minimap2)
+
+export ACC=$1
+export SEQFILE=$2
+export SAMPLEDIR=$3
+export PLATFORM=$4
+export REPEATELEMENTSEQ=$5 # optional repeatelement consensus
+
+export MAINSCRIPTS=/data/nhansen/HERV_K_catalog/scripts
+
+# retrieve accession and create fasta file:
+mkdir -p $SAMPLEDIR/SRA_data
+
+cd $SAMPLEDIR/SRA_data
+$MAINSCRIPTS/sh.download_data $SAMPLEDIR/SRA_data $ACC "$PLATFORM"
+$MAINSCRIPTS/sh.create_fasta $SAMPLEDIR/SRA_data $ACC "$PLATFORM"
+
+if [ ! -s $SAMPLEDIR/SRA_data/$ACC.fasta.gz.fai ]; then
+    exit 1;
+fi
+
+# run MASHmap:
+mkdir -p $SAMPLEDIR/MASHmap
+cd $SAMPLEDIR/MASHmap
+$MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/SRA_data/$ACC.fasta.gz $SEQFILE 85 500 $REPEATELEMENTSEQ
+
+# run minimap2:
+mkdir -p $SAMPLEDIR/minimap2
+cd $SAMPLEDIR/minimap2
+$MAINSCRIPTS/sh.run_minimap2 $SAMPLEDIR/MASHmap/$ACC.mashmap.fasta.gz

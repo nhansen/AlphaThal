@@ -1,0 +1,27 @@
+#!/bin/bash
+
+module load samtools
+module load gnuplot/5.2.2
+module load java
+
+export SAMPLE=$1
+export REFHERV=$2
+
+export PATH=$PATH:/home/nhansen/canu/Linux-amd64/bin
+
+export HERVDIR=/data/nhansen/HERV_K_catalog/discovery2/refgenotype
+export ALLREADFASTA=$HERVDIR/$SAMPLE/MASHmap/$SAMPLE.mashmap85.all_reads.fasta.gz
+
+cd $HERVDIR/$SAMPLE
+
+mkdir -p $HERVDIR/$SAMPLE/canu/$REFHERV
+cd $HERVDIR/$SAMPLE/canu/$REFHERV
+
+export HERVFASTA=$HERVDIR/$SAMPLE/canu/$REFHERV/$REFHERV.mashmapreads.fasta
+rm -f $HERVFASTA
+for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] {print $2}' $HERVDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
+    echo $ALLREADFASTA $readname
+    samtools faidx $ALLREADFASTA $readname >> $HERVFASTA
+done
+
+canu -genomeSize=20k -pacbio-raw $HERVFASTA usegrid=0 corOutCoverage=100 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $REFHERV -d $HERVDIR/$SAMPLE/canu/$REFHERV

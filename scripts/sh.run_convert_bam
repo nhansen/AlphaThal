@@ -1,0 +1,19 @@
+#!/bin/bash
+
+module load samtools
+
+export SAMPLE=$1
+
+export SCRIPTSDIR=/data/nhansen/HERV_K_catalog/SVA_discovery/scripts
+export ALLELEDIR=/data/nhansen/HERV_K_catalog/SVA_discovery/refgenotype/$SAMPLE/allele_aligns
+
+export SAMPLEBAM=$ALLELEDIR/$SAMPLE.hg19.sort.bam
+export SAMPLEHG19BAM=$ALLELEDIR/$SAMPLE.hg19.converted.bam
+export SAMPLEHG19SORTBAM=$ALLELEDIR/$SAMPLE.hg19.converted.sort.bam
+
+$SCRIPTSDIR/convert_hervk_bam_to_hg19.pl $SAMPLEBAM | samtools view -b -t /fdb/genome/hg19/hg19.fa.fai -o $SAMPLEHG19BAM
+
+samtools sort $SAMPLEHG19BAM -o $SAMPLEHG19SORTBAM
+samtools index $SAMPLEHG19SORTBAM
+
+rm $SAMPLEHG19BAM
