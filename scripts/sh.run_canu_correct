@@ -3,13 +3,12 @@
 module load samtools
 module load gnuplot/5.2.2
 module load java
+module load canu
 
 export SAMPLE=$1
 export REFHERV=$2
 
-export PATH=$PATH:/home/nhansen/canu/Linux-amd64/bin
-
-export HERVDIR=/data/nhansen/HERV_K_catalog/SVA_discovery/refgenotype
+export HERVDIR=$LONGREADTOPDIR/refgenotype
 export ALLREADFASTA=$HERVDIR/$SAMPLE/MASHmap/$SAMPLE.mashmap85.all_reads.fasta.gz
 
 cd $HERVDIR/$SAMPLE
