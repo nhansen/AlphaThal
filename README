@@ -56,4 +56,3 @@ run the following command:
 $LONGREADTOPDIR/scripts/run_hervk_pipeline.pl --flankseqs $LONGREADTOPDIR/prep/ref_and_nonref.flank.fasta --baitregions $LONGREADTOPDIR/prep/all_baits.bed <BIOSAMPLE> <SAMPLE DIRECTORY>
 
 
-
