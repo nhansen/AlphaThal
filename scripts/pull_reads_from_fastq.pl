@@ -2,7 +2,8 @@
 #
 use strict;
 
-use GTB::File qw(Open);
+use FileHandle;
+#use GTB::File qw(Open);
 
 my $Usage = "pull_reads_from_fastq.pl <file of readnames> <fastq file>\n";
 
@@ -13,7 +14,8 @@ my $readfile = $ARGV[0];
 my $fastqfile = $ARGV[1];
 
 my %readnames = ();
-my $read_fh = Open($readfile);
+#my $read_fh = Open($readfile);
+my $read_fh = FileHandle->new($readfile);
 
 while (<$read_fh>) {
     if (/^\s*(\S+)\s*/) {
@@ -22,7 +24,8 @@ while (<$read_fh>) {
 }
 close $read_fh;
 
-my $fq_fh = Open($fastqfile);
+#my $fq_fh = Open($fastqfile);
+my $fq_fh = FileHandle->new($fastqfile);
 
 my $printthisread = 0;
 while (<$fq_fh>) {
