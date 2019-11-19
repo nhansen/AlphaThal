@@ -1,4 +1,7 @@
 #!/bin/bash
 
 export GENOMESIZE=3095693983
-for sample in `awk -F"\t" '{print $26}' $LONGREADTOPDIR/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt | sort | uniq`; do export SAMPLE=$sample; awk -F"\t" '$26==ENVIRON["SAMPLE"] {sum += $5; sample=$30; biosample=$26} END {print sum/ENVIRON["GENOMESIZE"]" "sample" "biosample}' $LONGREADTOPDIR/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt ; done |sort -n
+for sample in `awk -F"\t" '{print $26}' $LONGREADTOPDIR/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt | sort | uniq`; do
+    export SAMPLE=$sample;
+    awk -F"\t" '$26==ENVIRON["SAMPLE"] {sum += $5; sample=$30; biosample=$26} END {OFS="\t"; print sum/ENVIRON["GENOMESIZE"]" "sample" "biosample}' $LONGREADTOPDIR/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt ;
+done | sort -n
