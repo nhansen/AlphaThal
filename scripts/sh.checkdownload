@@ -5,8 +5,6 @@ module load samtools
 export SAMPLE=$1
 export SAMPLEDIR=$2
 
-export SCRIPTS=/data/nhansen/HERV_K_catalog/scripts
-
 export NOINDICES=`ls $SAMPLEDIR/minimap2/*.bai | grep -v 'allreads' | wc -l | awk '{print $1}'`
 export NOACCS=`wc -l $SAMPLEDIR/SRR_Acc_List.txt | awk '{print $1}'`
 
