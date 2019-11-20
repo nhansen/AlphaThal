@@ -13,7 +13,7 @@ if (!$TOPDIR) {
     die "You must set the LONGREADTOPDIR environment variable before running this script!\n";
 }
 
-our $SRAFILE = $ENV{'SRASAMPLEFILE'} || $ENV{'LONGREADTOPDIR'}.'/SRA_samples/SRAHumanPacBioWGSRuns.linux.051119.txt';
+our $SRAFILE = $ENV{'SRASAMPLEFILE'} || $ENV{'LONGREADTOPDIR'}.'/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt';
 
 my $Usage = qq!run_hervk_pipeline.pl <--flankseqs flank_fasta> <--baitregions baits_bed> <--repeatseq repeat_consensus_fasta> <--scripts script_dir> <--skipdownload> <--skipcheck> <--skipmerge> <--skipreadtable> <--skipcanucorrect> <--skipsvrefine> <biosample> <sample directory>\n!;
 
