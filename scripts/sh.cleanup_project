@@ -1,0 +1,36 @@
+#!/bin/bash
+
+export SAMPLEDIR=$1
+
+cd $SAMPLEDIR
+
+# cleanup SRA_data directory:
+
+rm -f SRA_data/*.fasta.gz
+
+# cleanup MASHmap directory:
+
+rm -f MASHmap/*.fast*.gz
+
+# cleanup minimap2 directory:
+
+rm -f minimap2/*.bam
+
+# cleanup canu_correct directory:
+
+mkdir -p canu_corrected_reads
+
+mv canu_correct/*/*.correctedReads.* canu_corrected_reads/
+mv canu_correct/*/*.report canu_corrected_reads/
+
+rm -rf canu_correct/*/*
+
+for file in `ls canu_corrected_reads`; do
+    export TARGET=`echo $file | sed 's/\..*//'`
+    echo $TARGET
+
+    mv canu_corrected_reads/$file canu_correct/$TARGET/
+done
+
+rmdir canu_corrected_reads
+
