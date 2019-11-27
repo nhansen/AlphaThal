@@ -4,8 +4,8 @@ module load samtools
 
 export SAMPLE=$1
 
-export SCRIPTSDIR=/data/nhansen/HERV_K_catalog/SVA_discovery/scripts
-export ALLELEDIR=/data/nhansen/HERV_K_catalog/SVA_discovery/refgenotype/$SAMPLE/allele_aligns
+export SCRIPTSDIR=$LONGREADTOPDIR/scripts
+export ALLELEDIR=$LONGREADTOPDIR/refgenotype/$SAMPLE/allele_aligns
 
 export SAMPLEBAM=$ALLELEDIR/$SAMPLE.hg19.sort.bam
 export SAMPLEHG19BAM=$ALLELEDIR/$SAMPLE.hg19.converted.bam
