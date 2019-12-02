@@ -4,6 +4,7 @@
 
 module load gcc/4.9.4
 module load samtools
+module load mashmap
 
 export SRRFASTA=$1
 export SEQUENCES=$2
@@ -21,11 +22,11 @@ export TASKS=${SLURM_CPUS_PER_TASK:-2}
 # 041618 -- pi 80, SEQFILE=HERV_K_sequences.fasta
 # 042218 -- pi 80, s 2000, SEQFILE=HERV_K_sequences_041918.fasta
 # Also tried pi 85 with above parameters and with s 1000
-/home/nhansen/mashmap/mashmap-Linux64-v2.0/mashmap -r $SEQUENCES -q $SRRFASTA -t $TASKS --pi $PI -s $SEQLENGTH -o $OUTPUT
+mashmap -r $SEQUENCES -q $SRRFASTA -t $TASKS --pi $PI -s $SEQLENGTH -o $OUTPUT
 
 if [[ $OPTELEMENTSEQ != "" ]]; then
     export OUTPUTREPEATS=`echo $SRRFASTA.mashmap85.repeatelement.out | sed 's:.*/::' | sed 's/.fasta//'`
-    /home/nhansen/mashmap/mashmap-Linux64-v2.0/mashmap -r $OPTELEMENTSEQ -q $SRRFASTA -t $TASKS --pi 85 -s 500 -o $OUTPUTREPEATS
+    mashmap -r $OPTELEMENTSEQ -q $SRRFASTA -t $TASKS --pi 85 -s 500 -o $OUTPUTREPEATS
 fi
 
 export SRRFASTA=`echo $SRRFASTA | sed 's/\.gz//'`
