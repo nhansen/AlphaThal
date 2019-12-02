@@ -40,4 +40,4 @@ $SCRIPTDIR/pull_reads_from_fastq.pl $READNAMEFILE $SRRFASTQ | gzip -c > $MATCHRE
 
 gunzip -c $MATCHREADFASTQGZ | awk 'NR==4*int(NR/4)+1 || NR==4*int(NR/4)+2 {print}' | sed 's/^@/>/' | bgzip -c > $MATCHREADFILEGZ
 
-rm $SRRFASTQ
+#rm $SRRFASTQ
