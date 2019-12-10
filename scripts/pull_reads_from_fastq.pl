@@ -3,7 +3,6 @@
 use strict;
 
 use FileHandle;
-#use GTB::File qw(Open);
 
 my $Usage = "pull_reads_from_fastq.pl <file of readnames> <fastq file>\n";
 
@@ -14,8 +13,9 @@ my $readfile = $ARGV[0];
 my $fastqfile = $ARGV[1];
 
 my %readnames = ();
-#my $read_fh = Open($readfile);
-my $read_fh = FileHandle->new($readfile);
+
+my $readfilestring = ($readfile =~ /\.gz$/) ? "gunzip -c $readfile | " : $readfile;
+my $read_fh = FileHandle->new($readfilestring);
 
 while (<$read_fh>) {
     if (/^\s*(\S+)\s*/) {
@@ -24,8 +24,8 @@ while (<$read_fh>) {
 }
 close $read_fh;
 
-#my $fq_fh = Open($fastqfile);
-my $fq_fh = FileHandle->new($fastqfile);
+my $fastqfilestring = ($fastqfile =~ /\.gz$/) ? "gunzip -c $fastqfile | " : $fastqfile;
+my $fq_fh = FileHandle->new($fastqfilestring);
 
 my $printthisread = 0;
 while (<$fq_fh>) {
