@@ -5,13 +5,12 @@ module load bcftools/1.9
 module load samtools/0.1.19
 
 export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
-export TOPDIR=/data/nhansen/HERV_K_catalog/SVA_discovery
-export PREPDIR=$TOPDIR/prep
+export PREPDIR=$LONGREADTOPDIR/prep
 
 export SAMPLE=$1
 export HERVKID=$2
 
-export SAMPLEDIR=$TOPDIR/refgenotype/$SAMPLE
+export SAMPLEDIR=$LONGREADTOPDIR/refgenotype/$SAMPLE
 
 export HEADERFILE=$PREPDIR/allele_sequences/complete_header_seqs.total.sam
 
