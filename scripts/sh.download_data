@@ -21,7 +21,7 @@ if [[ $URL != "" ]]; then
     wget $URL;
 else
     echo "No URL--using prefetch to get "$SRRACC
-    prefetch $SRRACC
+    prefetch --max-size 100000000000 $SRRACC
     fastq-dump --gzip $SRRACC
 fi
 
