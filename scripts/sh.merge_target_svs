@@ -5,8 +5,8 @@ export DIRNAME=$2 # this is a subdirectory of the mergedSVs directory for the pr
 
 export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
 
-export REFGENODIR=/data/nhansen/HERV_K_catalog/SVA_discovery/refgenotype
-export REFFILE=/data/nhansen/HERV_K_catalog/SVA_discovery/prep/allele_sequences/$TARGETID.widerregion.fasta
+export REFGENODIR=$LONGREADTOPDIR/refgenotype
+export REFFILE=$LONGREADTOPDIR/prep/allele_sequences/$TARGETID.widerregion.fasta
 
 cd $REFGENODIR/mergedSVs
 
@@ -16,7 +16,7 @@ mkdir -p $DIRNAME
 cd $DIRNAME
 
 rm -f $TARGETID.merged.vcf $TARGETID.merged.sorted.vcf
-for file in `ls $REFGENODIR/*.SAMN*/allele_aligns/$TARGETID.labeled.vcf.gz`; do
+for file in `ls $REFGENODIR/*/allele_aligns/$TARGETID.labeled.vcf.gz`; do
     echo $file;
 
     gunzip -c $file | grep -v '#' >> $TARGETID.merged.vcf

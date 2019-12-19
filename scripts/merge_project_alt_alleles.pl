@@ -32,7 +32,7 @@ my $rh_directories = make_directories($projectdir, $mergedirname);
     
 my $merge_jobid = launch_targetmerge_swarm($rh_directories, $baitregions);
 print "Launched target merge swarm with job id $merge_jobid\n";
-my $waa_jobid = launch_writealleles_swarm($rh_directories, $baitregions, $merge_jobid);
+my $waa_jobid = launch_writealleles_swarm($rh_directories, $mergedirname, $baitregions, $merge_jobid);
 print "Launched alt allele fasta swarm with job id $waa_jobid\n";
 
 ########END MAIN#######
@@ -104,13 +104,12 @@ sub launch_targetmerge_swarm {
 #
 sub launch_writealleles_swarm {
     my $rh_dirs = shift;
+    my $mergedirname = shift;
     my $baitregion_file = shift;
     my $mtv_jobid = shift;
 
     my $mergedir = $rh_dirs->{mergedir};
     print "MERGEDIR: $mergedir\n";
-
-    my $altallele_dir = $rh_dirs->{altalleledir};
 
     cp $scriptdir."/sh.write_alt_alleles", $rh_dirs->{"scriptsdir"}."/sh.write_alt_alleles";
     my $commandfile = $rh_dirs->{"scriptsdir"}."/sh.altalleleswarm";
@@ -126,7 +125,7 @@ sub launch_writealleles_swarm {
         my @fields = split /\t/, $_;
         my $targetname = $fields[$#fields];
 
-        print COMMANDS $rh_dirs->{"scriptsdir"}."/sh.write_alt_alleles $targetname $altallele_dir\n";
+        print COMMANDS $rh_dirs->{"scriptsdir"}."/sh.write_alt_alleles $targetname $mergedirname\n";
     }
 
     close COMMANDS;
