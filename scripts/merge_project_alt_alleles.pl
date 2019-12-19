@@ -100,6 +100,8 @@ sub launch_targetmerge_swarm {
     }
 }
 
+# Use merged VCFs to write fasta files of alt alleles to align reads to:
+#
 sub launch_writealleles_swarm {
     my $rh_dirs = shift;
     my $baitregion_file = shift;
