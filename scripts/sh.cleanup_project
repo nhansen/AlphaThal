@@ -22,6 +22,7 @@ rm -f minimap2/*.bam
 mkdir -p canu_corrected_reads
 
 mv canu_correct/*/*.correctedReads.* canu_corrected_reads/
+mv canu_correct/*/*.fasta canu_corrected_reads/
 mv canu_correct/*/*.report canu_corrected_reads/
 
 rm -rf canu_correct/*/*
