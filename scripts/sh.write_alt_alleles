@@ -1,0 +1,15 @@
+#!/bin/bash
+
+module load bcftools
+
+export TARGETID=$1
+export DIRNAME=$2 # this is a subdirectory of the mergedSVs directory for the project
+
+export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
+
+export SCRIPTSDIR=$LONGREADTOPDIR/scripts
+export REFGENODIR=$LONGREADTOPDIR/refgenotype
+
+cd $LONGREADTOPDIR
+
+$SCRIPTSDIR/gather_alternate_alleles.pl $TARGETID $DIRNAME

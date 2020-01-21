@@ -1,0 +1,10 @@
+#!/bin/bash
+
+export SRADIR=$1
+
+export SAMPLE=`echo $SRADIR | sed 's:/SRA_data.*::' | sed 's:.*/::'`
+
+echo $SRADIR $SAMPLE
+
+cd $SRADIR
+awk -F"\t" '{print $2}' *.fai | sort -n | uniq -c > $SAMPLE.coverage.hist.txt

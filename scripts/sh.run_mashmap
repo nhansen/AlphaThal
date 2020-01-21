@@ -32,12 +32,7 @@ fi
 export SRRFASTA=`echo $SRRFASTA | sed 's/\.gz//'`
 export READNAMEFILE=`echo $SRRFASTA.mashmap.readnames | sed 's:.*/::' | sed 's/.fasta//'`
 export MATCHREADFILEGZ=`echo $SRRFASTA.mashmap.fasta.gz | sed 's:.*/::' | sed 's/.fasta//'`
-export MATCHREADFASTQGZ=`echo $SRRFASTA.mashmap.fastq.gz | sed 's:.*/::' | sed 's/.fasta//'`
-export SRRFASTQ=`echo $SRRFASTA.gz | sed 's/.fasta/.fastq/'`
 
 awk '{print $1}' $OUTPUT | sort | uniq > $READNAMEFILE;
-$SCRIPTDIR/pull_reads_from_fastq.pl $READNAMEFILE $SRRFASTQ | gzip -c > $MATCHREADFASTQGZ
+$SCRIPTDIR/pull_reads_from_fasta.pl $READNAMEFILE $SRRFASTA | gzip -c > $MATCHREADFILEGZ
 
-gunzip -c $MATCHREADFASTQGZ | awk 'NR==4*int(NR/4)+1 || NR==4*int(NR/4)+2 {print}' | sed 's/^@/>/' | bgzip -c > $MATCHREADFILEGZ
-
-#rm $SRRFASTQ

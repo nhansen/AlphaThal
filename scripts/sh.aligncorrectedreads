@@ -32,18 +32,21 @@ if [ -e $QUERYFASTA ]; then
     delta-filter -q $HERVKID.delta > $HERVKID.qdelta
     show-coords -rclTH $HERVKID.qdelta > $HERVKID.qcoords
 
-    /home/nhansen/SVanalyzer/scripts/SVrefine --ref_fasta $REFFASTA --delta $HERVKID.qdelta --outvcf $HERVKID.vcf.gz --includeseqs
+    /home/nhansen/SVanalyzer/scripts/SVrefine --ref_fasta $REFFASTA --delta $HERVKID.qdelta --outvcf $HERVKID.vcf.gz --includeseqs --prefix $HERVKID
 
     echo "/home/nhansen/SVanalyzer/scripts/misc/delta2sam.pl --delta "$HERVKID".qdelta --query_fasta "$QUERYFASTA" --ref_fasta "$REFFASTA" --out "$HERVKID".hg19.sam"
 
     rm -f $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf
     rm -f $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf.gz
 
+    gunzip -c $HERVKID.vcf.gz | grep '#' > $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf
+
     # attach ids to SVs showing which corrected read they derive from:
+
     for linenum in `gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk '{print NR}'`; do
         export LINENUM=$linenum;
         export READNAME=`gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {print $8}' | sed 's/.*ALTWIDENED=//' | sed 's/:.*//'`;
-        gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {$3=ENVIRON["READNAME"]":"NR; OFS="\t"; print}' >> $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf;
+        gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {$3=ENVIRON["READNAME"]"."NR; OFS="\t"; print}' >> $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf;
     done
         
     bgzip $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf
