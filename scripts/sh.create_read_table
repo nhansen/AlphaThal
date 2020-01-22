@@ -7,7 +7,7 @@ export SAMPLE=$1
 export SAMPLEDIR=$2
 export BAITREGIONS=$3
 
-export SAMPLEBAM=$SAMPLEDIR/minimap2/$SAMPLE.allreads.minimap.hg19.bam
+export SAMPLEBAM=$SAMPLEDIR/minimap2/$SAMPLE.allreads.minimap.genome.bam
 
 export SCRIPTS=$LONGREADTOPDIR/scripts
 

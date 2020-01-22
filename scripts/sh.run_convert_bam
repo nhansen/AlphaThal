@@ -3,17 +3,19 @@
 module load samtools
 
 export SAMPLE=$1
+export WIDETARGETBED=$2
+export REFFASTA=$3
 
 export SCRIPTSDIR=$LONGREADTOPDIR/scripts
 export ALLELEDIR=$LONGREADTOPDIR/refgenotype/$SAMPLE/allele_aligns
 
-export SAMPLEBAM=$ALLELEDIR/$SAMPLE.hg19.sort.bam
-export SAMPLEHG19BAM=$ALLELEDIR/$SAMPLE.hg19.converted.bam
-export SAMPLEHG19SORTBAM=$ALLELEDIR/$SAMPLE.hg19.converted.sort.bam
+export SAMPLEBAM=$ALLELEDIR/$SAMPLE.genome.sort.bam
+export SAMPLEGENOMEBAM=$ALLELEDIR/$SAMPLE.genome.converted.bam
+export SAMPLEGENOMESORTBAM=$ALLELEDIR/$SAMPLE.genome.converted.sort.bam
 
-$SCRIPTSDIR/convert_hervk_bam_to_hg19.pl $SAMPLEBAM | samtools view -b -t /fdb/genome/hg19/hg19.fa.fai -o $SAMPLEHG19BAM
+$SCRIPTSDIR/convert_target_bam_to_genome.pl $SAMPLEBAM $WIDETARGETBED | samtools view -b -t $REFFASTA.fai -o $SAMPLEGENOMEBAM
 
-samtools sort $SAMPLEHG19BAM -o $SAMPLEHG19SORTBAM
-samtools index $SAMPLEHG19SORTBAM
+samtools sort $SAMPLEGENOMEBAM -o $SAMPLEGENOMESORTBAM
+samtools index $SAMPLEGENOMESORTBAM
 
-rm $SAMPLEHG19BAM
+rm $SAMPLEGENOMEBAM

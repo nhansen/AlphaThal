@@ -8,7 +8,7 @@ export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
 export PREPDIR=$LONGREADTOPDIR/prep
 
 export SAMPLE=$1
-export HERVKID=$2
+export TARGETID=$2
 
 export SAMPLEDIR=$LONGREADTOPDIR/refgenotype/$SAMPLE
 
@@ -16,49 +16,47 @@ export HEADERFILE=$PREPDIR/allele_sequences/complete_header_seqs.total.sam
 
 cd $SAMPLEDIR/allele_aligns
 
-export QUERYFASTA=$SAMPLEDIR/canu_correct/$HERVKID/$HERVKID.correctedReads.fasta
+export QUERYFASTA=$SAMPLEDIR/canu_correct/$TARGETID/$TARGETID.correctedReads.fasta
 
 if [ -e $QUERYFASTA.gz ]; then
   gunzip $QUERYFASTA.gz
 fi
 
 if [ -e $QUERYFASTA ]; then
-    export REFFASTA=$PREPDIR/allele_sequences/$HERVKID.widerregion.fasta
+    export REFFASTA=$PREPDIR/allele_sequences/$TARGETID.widerregion.fasta
 
-    echo "nucmer --maxmatch -l 100 -c 500 -p "$HERVKID $REFFASTA $QUERYFASTA
+    echo "nucmer --maxmatch -l 100 -c 500 -p "$TARGETID $REFFASTA $QUERYFASTA
 
-    nucmer --maxmatch -l 100 -c 500 -p $HERVKID $REFFASTA $QUERYFASTA
-    dnadiff -p $HERVKID -d $HERVKID.delta
-    delta-filter -q $HERVKID.delta > $HERVKID.qdelta
-    show-coords -rclTH $HERVKID.qdelta > $HERVKID.qcoords
+    nucmer --maxmatch -l 100 -c 500 -p $TARGETID $REFFASTA $QUERYFASTA
+    dnadiff -p $TARGETID -d $TARGETID.delta
+    delta-filter -q $TARGETID.delta > $TARGETID.qdelta
+    show-coords -rclTH $TARGETID.qdelta > $TARGETID.qcoords
 
-    /home/nhansen/SVanalyzer/scripts/SVrefine --ref_fasta $REFFASTA --delta $HERVKID.qdelta --outvcf $HERVKID.vcf.gz --includeseqs --prefix $HERVKID
+    /home/nhansen/SVanalyzer/scripts/SVrefine --ref_fasta $REFFASTA --delta $TARGETID.qdelta --outvcf $TARGETID.vcf.gz --includeseqs --prefix $TARGETID
 
-    echo "/home/nhansen/SVanalyzer/scripts/misc/delta2sam.pl --delta "$HERVKID".qdelta --query_fasta "$QUERYFASTA" --ref_fasta "$REFFASTA" --out "$HERVKID".hg19.sam"
+    echo "/home/nhansen/SVanalyzer/scripts/misc/delta2sam.pl --delta "$TARGETID".qdelta --query_fasta "$QUERYFASTA" --ref_fasta "$REFFASTA" --out "$TARGETID".genome.sam"
 
-    rm -f $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf
-    rm -f $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf.gz
+    rm -f $SAMPLEDIR/allele_aligns/$TARGETID.labeled.vcf
+    rm -f $SAMPLEDIR/allele_aligns/$TARGETID.labeled.vcf.gz
 
-    gunzip -c $HERVKID.vcf.gz | grep '#' > $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf
+    gunzip -c $TARGETID.vcf.gz | grep '#' > $SAMPLEDIR/allele_aligns/$TARGETID.labeled.vcf
 
     # attach ids to SVs showing which corrected read they derive from:
 
-    for linenum in `gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk '{print NR}'`; do
+    for linenum in `gunzip -c $TARGETID.vcf.gz | grep -v '#' | awk '{print NR}'`; do
         export LINENUM=$linenum;
-        export READNAME=`gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {print $8}' | sed 's/.*ALTWIDENED=//' | sed 's/:.*//'`;
-        gunzip -c $HERVKID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {$3=ENVIRON["READNAME"]"."NR; OFS="\t"; print}' >> $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf;
+        export READNAME=`gunzip -c $TARGETID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {print $8}' | sed 's/.*ALTWIDENED=//' | sed 's/:.*//'`;
+        gunzip -c $TARGETID.vcf.gz | grep -v '#' | awk -F"\t" 'NR==ENVIRON["LINENUM"] {$3=ENVIRON["READNAME"]"."NR; OFS="\t"; print}' >> $SAMPLEDIR/allele_aligns/$TARGETID.labeled.vcf;
     done
         
-    bgzip $SAMPLEDIR/allele_aligns/$HERVKID.labeled.vcf
+    bgzip $SAMPLEDIR/allele_aligns/$TARGETID.labeled.vcf
 
-    /home/nhansen/SVanalyzer/scripts/misc/delta2sam.pl --delta $HERVKID.qdelta --noheader --query_fasta $QUERYFASTA --ref_fasta $REFFASTA --out $HERVKID.hg19.sam
+    /home/nhansen/SVanalyzer/scripts/misc/delta2sam.pl --delta $TARGETID.qdelta --noheader --query_fasta $QUERYFASTA --ref_fasta $REFFASTA --out $TARGETID.genome.sam
 
-    cat $HEADERFILE $HERVKID.hg19.sam > $HERVKID.hg19.fullheader.sam
-    samtools view -bS $HERVKID.hg19.fullheader.sam -o $HERVKID.hg19.fullheader.bam
-    samtools sort $HERVKID.hg19.fullheader.bam $HERVKID.hg19.fullheader.sort
-    samtools index $HERVKID.hg19.fullheader.sort.bam
-
-    #rm $HERVKID.hg19.sam $HERVKID.hg19.fullheader.sam $HERVKID.hg19.fullheader.bam
+    cat $HEADERFILE $TARGETID.genome.sam > $TARGETID.genome.fullheader.sam
+    samtools view -bS $TARGETID.genome.fullheader.sam -o $TARGETID.genome.fullheader.bam
+    samtools sort $TARGETID.genome.fullheader.bam $TARGETID.genome.fullheader.sort
+    samtools index $TARGETID.genome.fullheader.sort.bam
 
     bgzip $QUERYFASTA
 

@@ -6,16 +6,19 @@ export SAMPLE=$1
 export SAMPLEDIR=$2
 
 export NOINDICES=`ls $SAMPLEDIR/minimap2/*.bai | grep -v 'allreads' | wc -l | awk '{print $1}'`
-export NOACCS=`wc -l $SAMPLEDIR/SRR_Acc_List.txt | awk '{print $1}'`
+
+if [ -e $SAMPLDIR/SRR_Acc_List.txt ]; then
+    export NOACCS=`wc -l $SAMPLEDIR/SRR_Acc_List.txt | awk '{print $1}'`
+else
+    export NOACCS=`wc -l $SAMPLEDIR/read_fasta_list.txt | awk '{print $1}'`;
+fi
 
 if [ $NOINDICES -eq $NOACCS ]; then
     echo "Success"
-    cd $SAMPLEDIR/SRA_data
-    rm *.fasta
     cd $SAMPLEDIR/MASHmap
     for file in `ls *.mashmap.fasta.gz`; do gunzip -c $file; done | bgzip -c > $SAMPLE.mashmap85.all_reads.fasta.gz
     samtools faidx $SAMPLE.mashmap85.all_reads.fasta.gz
-    #rm *.mashmap.fastq.gz
+    rm *.mashmap.fastq.gz
     rm *.mashmap.fasta.gz
 else
     echo "Incorrect number of index files!"

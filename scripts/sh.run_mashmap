@@ -29,9 +29,8 @@ if [[ $OPTELEMENTSEQ != "" ]]; then
     mashmap -r $OPTELEMENTSEQ -q $SRRFASTA -t $TASKS --pi 85 -s 500 -o $OUTPUTREPEATS
 fi
 
-export SRRFASTA=`echo $SRRFASTA | sed 's/\.gz//'`
 export READNAMEFILE=`echo $SRRFASTA.mashmap.readnames | sed 's:.*/::' | sed 's/.fasta//'`
-export MATCHREADFILEGZ=`echo $SRRFASTA.mashmap.fasta.gz | sed 's:.*/::' | sed 's/.fasta//'`
+export MATCHREADFILEGZ=`echo $SRRFASTA.mashmap.fasta.gz | sed 's:.*/::' | sed 's/.fasta//' | sed 's/.gz//'`
 
 awk '{print $1}' $OUTPUT | sort | uniq > $READNAMEFILE;
 $SCRIPTDIR/pull_reads_from_fasta.pl $READNAMEFILE $SRRFASTA | gzip -c > $MATCHREADFILEGZ

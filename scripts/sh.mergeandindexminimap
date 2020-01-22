@@ -6,6 +6,6 @@ export SAMPLE=$1
 export MINIMAPDIR=$2
 
 cd $MINIMAPDIR
-samtools merge $SAMPLE.allreads.minimap.hg19.bam *.mashmap*.minimap.hg19.sort.bam
-samtools index $SAMPLE.allreads.minimap.hg19.bam
+samtools merge $SAMPLE.allreads.minimap.genome.bam *.mashmap*.minimap.genome.sort.bam
+samtools index $SAMPLE.allreads.minimap.genome.bam
 
