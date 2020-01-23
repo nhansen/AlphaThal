@@ -1,0 +1,19 @@
+#!/bin/bash
+# request 16g memory (for minimap2)
+
+export FASTA=$1
+export SEQFILE=$2
+export REFFASTA=$3
+export SAMPLEDIR=$4
+export REPEATELEMENTSEQ=$5 # optional repeatelement consensus
+
+export MAINSCRIPTS=$LONGREADTOPDIR/scripts
+
+# run MASHmap:
+cd $SAMPLEDIR/MASHmap
+$MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/read_data/$FASTA $SEQFILE 85 500 $REPEATELEMENTSEQ
+
+# run minimap2:
+cd $SAMPLEDIR/minimap2
+export MASHFASTA=`echo $FASTA | sed 's:.*/::' | sed 's/\.fa/.mashmap.fa/'`
+$MAINSCRIPTS/sh.run_minimap2 $SAMPLEDIR/MASHmap/$MASHFASTA $REFFASTA
