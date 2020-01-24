@@ -21,6 +21,8 @@ closedir MMBAMS;
 open REGIONS, $target_bedfile
     or die "Couldn\'t open $target_bedfile: $!\n";
 
+print "RefID\tRead\tReadLength\tLeftMashLength\tLeftMashIdent\tLeftClip\tRightMashLength\tRightIdent\tRightClip\n";
+
 while (<REGIONS>) {
     chomp;
     my ($chrom, $start, $end, $type, $refid, $rest) = split /\t/, $_;
@@ -31,7 +33,6 @@ while (<REGIONS>) {
         open SAMREADS, "samtools view -F0x100 $minimap_dir/$bamfile $chrom:$start-$end | "
             or die "Couldn\'t run samtools: $!\n";
     
-        print "RefID\tRead\tReadLength\tLeftMashLength\tLeftMashIdent\tLeftClip\tRightMashLength\tRightIdent\tRightClip\n";
         while (<SAMREADS>) {
             chomp;
             my ($readname, $flag, $alignchrom, $alignstart, $score, $cigar, $restsam) = split /\t/, $_;
