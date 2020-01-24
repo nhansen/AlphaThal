@@ -19,7 +19,7 @@ cd $HERVDIR/$SAMPLE/canu/$REFHERV
 
 export HERVFASTA=$HERVDIR/$SAMPLE/canu/$REFHERV/$REFHERV.mashmapreads.fasta
 rm -f $HERVFASTA
-for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] {print $2}' $HERVDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
+for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] {print $2}' $HERVDIR/$SAMPLE/read_table/$SAMPLE.read_table.txt | sort | uniq`; do
     echo $ALLREADFASTA $readname
     samtools faidx $ALLREADFASTA $readname >> $HERVFASTA
 done

@@ -14,7 +14,7 @@ cd $SAMPLEDIR/canu_correct;
 
 rm -f $COMMANDS
 
-for target in `awk '{print $1}' $SAMPLEDIR/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do 
+for target in `awk '{print $1}' $SAMPLEDIR/read_table/$SAMPLE.read_table.txt | sort | uniq`; do 
     echo "$SCRIPTSDIR/sh.run_canu_correct $SAMPLE $target" >> $COMMANDS;
 done
 

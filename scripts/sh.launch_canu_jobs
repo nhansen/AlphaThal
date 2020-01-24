@@ -11,7 +11,7 @@ cd $SAMPLEDIR/canu;
 
 rm -f $COMMANDS
 
-for refherv in `awk '{print $1}' $SAMPLEDIR/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do 
+for refherv in `awk '{print $1}' $SAMPLEDIR/read_table/$SAMPLE.read_table.txt | sort | uniq`; do 
     echo "$SCRIPTSDIR/sh.run_canu $SAMPLE $refherv" >> $COMMANDS;
 done
 

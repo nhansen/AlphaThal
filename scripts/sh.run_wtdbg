@@ -19,7 +19,7 @@ mkdir -p $HERVDIR/$SAMPLE/wtdbg/$REFHERV
 cd $HERVDIR/$SAMPLE/wtdbg/$REFHERV
 
 rm -f $HERVDIR/$SAMPLE/wtdbg/$REFHERV/$REFHERV.mashmapreads.fasta
-for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] {print $2}' $HERVDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
+for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] {print $2}' $HERVDIR/$SAMPLE/read_table/$SAMPLE.read_table.txt | sort | uniq`; do
     echo $ALLREADFASTA $readname
     samtools faidx $ALLREADFASTA $readname >> $HERVDIR/$SAMPLE/wtdbg/$REFHERV/$REFHERV.mashmapreads.fasta
 done

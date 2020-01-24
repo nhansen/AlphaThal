@@ -11,7 +11,7 @@ export SAMPLEBAM=$SAMPLEDIR/minimap2/$SAMPLE.allreads.minimap.genome.bam
 
 export SCRIPTS=$LONGREADTOPDIR/scripts
 
-mkdir -p $SAMPLEDIR/ReadData
-cd $SAMPLEDIR/ReadData
+mkdir -p $SAMPLEDIR/read_table
+cd $SAMPLEDIR/read_table
 
 $SCRIPTS/create_read_table.pl $BAITREGIONS $SAMPLEBAM $SAMPLEDIR/MASHmap/ > $SAMPLE.read_table.txt
