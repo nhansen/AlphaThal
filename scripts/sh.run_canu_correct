@@ -19,9 +19,13 @@ cd $RGDIR/$SAMPLE/canu_correct/$TARGETID
 export FASTA=$RGDIR/$SAMPLE/canu_correct/$TARGETID/$TARGETID.straddlereads.fasta
 rm -f $FASTA
 for readname in `awk -F"\t" '$1==ENVIRON["TARGETID"] && $5!="NA" && $8!="NA" {print $2}' $RGDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
+    export READNAME=$readname
     for fastafile in `ls $RGDIR/$SAMPLE/MASHmap/*.mashmap.fasta.gz`; do 
-        echo $ALLREADFASTA $readname
-        samtools faidx $ALLREADFASTA $readname >> $FASTA
+        export READ=`awk '$1==ENVIRON["READNAME"] {print $1}'`
+        if [ $READ ]; then
+            echo $ALLREADFASTA $readname
+            samtools faidx $ALLREADFASTA $readname >> $FASTA
+        fi
     done
 done
 
