@@ -6,22 +6,24 @@ module load java
 module load canu
 
 export SAMPLE=$1
-export REFHERV=$2
+export TARGETID=$2
 
-export HERVDIR=$LONGREADTOPDIR/refgenotype
-export ALLREADFASTA=$HERVDIR/$SAMPLE/MASHmap/$SAMPLE.mashmap85.all_reads.fasta.gz
+export RGDIR=$LONGREADTOPDIR/refgenotype
+export ALLREADFASTA=$RGDIR/$SAMPLE/MASHmap/$SAMPLE.mashmap85.all_reads.fasta.gz
 
-cd $HERVDIR/$SAMPLE
+cd $RGDIR/$SAMPLE
 
-mkdir -p $HERVDIR/$SAMPLE/canu_correct/$REFHERV
-cd $HERVDIR/$SAMPLE/canu_correct/$REFHERV
+mkdir -p $RGDIR/$SAMPLE/canu_correct/$TARGETID
+cd $RGDIR/$SAMPLE/canu_correct/$TARGETID
 
-export HERVFASTA=$HERVDIR/$SAMPLE/canu_correct/$REFHERV/$REFHERV.straddlereads.fasta
-rm -f $HERVFASTA
-for readname in `awk -F"\t" '$1==ENVIRON["REFHERV"] && $5!="NA" && $8!="NA" {print $2}' $HERVDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
-    echo $ALLREADFASTA $readname
-    samtools faidx $ALLREADFASTA $readname >> $HERVFASTA
+export FASTA=$RGDIR/$SAMPLE/canu_correct/$TARGETID/$TARGETID.straddlereads.fasta
+rm -f $FASTA
+for readname in `awk -F"\t" '$1==ENVIRON["TARGETID"] && $5!="NA" && $8!="NA" {print $2}' $RGDIR/$SAMPLE/ReadData/$SAMPLE.read_table.txt | sort | uniq`; do
+    for fastafile in `ls $RGDIR/$SAMPLE/MASHmap/*.mashmap.fasta.gz`; do 
+        echo $ALLREADFASTA $readname
+        samtools faidx $ALLREADFASTA $readname >> $FASTA
+    done
 done
 
-canu -correct -genomeSize=20k -pacbio-raw $HERVFASTA usegrid=0 corOutCoverage=100 corMinCoverage=0 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $REFHERV -d $HERVDIR/$SAMPLE/canu_correct/$REFHERV
+canu -correct -genomeSize=20k -pacbio-raw $FASTA usegrid=0 corOutCoverage=100 corMinCoverage=0 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $TARGETID -d $RGDIR/$SAMPLE/canu_correct/$TARGETID
 

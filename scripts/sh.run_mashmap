@@ -33,5 +33,6 @@ export READNAMEFILE=`echo $SRRFASTA.mashmap.readnames | sed 's:.*/::' | sed 's/.
 export MATCHREADFILEGZ=`echo $SRRFASTA.mashmap.fasta.gz | sed 's:.*/::' | sed 's/.fasta//' | sed 's/.gz//'`
 
 awk '{print $1}' $OUTPUT | sort | uniq > $READNAMEFILE;
-$SCRIPTDIR/pull_reads_from_fasta.pl $READNAMEFILE $SRRFASTA | gzip -c > $MATCHREADFILEGZ
+$SCRIPTDIR/pull_reads_from_fasta.pl $READNAMEFILE $SRRFASTA | bgzip -c > $MATCHREADFILEGZ
+samtools faidx $MATCHREADFILEGZ
 
