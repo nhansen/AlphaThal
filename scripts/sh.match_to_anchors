@@ -13,7 +13,7 @@ export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 # run MASHmap:
 cd $SAMPLEDIR/MASHmap
 $MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/read_data/$FASTA $SEQFILE 85 500 $REPEATELEMENTSEQ
-export MASHMAPOUT=`echo $FASTA.mashmap$PI.out | sed 's:.*/::' | sed 's/.fasta//'`
+export MASHMAPOUT=`echo $FASTA.mashmap.out | sed 's:.*/::' | sed 's/.fasta//'`
 
 # run minimap2:
 cd $SAMPLEDIR/minimap2
@@ -26,4 +26,4 @@ export BAMFILE=$BASE.minimap.genome.sort.bam
 
 cd $SAMPLEDIR/read_table
 export READTABLE=$BASE.readtable.txt
-$MAINSCRIPTS/create_read_table_faster.pl $BAITREGIONS $BAMFILE $MASHMAPOUT  > $READTABLE
+$MAINSCRIPTS/create_read_table_faster.pl $BAITREGIONS $SAMPLEDIR/minimap2/$BAMFILE $SAMPLEDIR/MASHmap/$MASHMAPOUT > $READTABLE

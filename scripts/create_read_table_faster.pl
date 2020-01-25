@@ -50,8 +50,8 @@ sub read_mash_hits {
     my $mash_file = shift;
 
     my %mash_hits = ();
-    open MASH, "$mashdir/$mash_file"
-        or die "Couldn\'t open $mashdir/$mash_file for reading: $!\n";
+    open MASH, $mash_file
+        or die "Couldn\'t open $mash_file for reading: $!\n";
     while (<MASH>) {
         chomp;
         my ($readname, $readlength, $readstart, $readend, $readstrand, $refhit, $reflength, $refstart, $refend, $percident) = split /\s/, $_;
