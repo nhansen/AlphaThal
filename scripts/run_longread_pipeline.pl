@@ -102,7 +102,7 @@ sub make_directories {
     ($directories{'mashmap_dir'}) = (-e "$sampledir/MASHmap") ? "$sampledir/MASHmap" : make_path "$sampledir/MASHmap";
     ($directories{'canu_dir'}) = (-e "$sampledir/canu_correct") ? "$sampledir/canu_correct" : make_path "$sampledir/canu_correct";
     ($directories{'readtable_dir'}) = (-e "$sampledir/read_table") ? "$sampledir/read_table" : make_path "$sampledir/read_table";
-    #($directories{'svrefine_dir'}) = (-e "$sampledir/allele_aligns") ? "$sampledir/allele_aligns" : make_path "$sampledir/allele_aligns";
+    ($directories{'svrefine_dir'}) = (-e "$sampledir/allele_aligns") ? "$sampledir/allele_aligns" : make_path "$sampledir/allele_aligns";
     #($directories{'consensus_dir'}) = (-e "$sampledir/consensus_seqs") ? "$sampledir/consensus_seqs" : make_path "$sampledir/consensus_seqs";
     #($directories{'reports_dir'}) = (-e "$sampledir/Reports") ? "$sampledir/Reports" : make_path "$sampledir/Reports";
 
