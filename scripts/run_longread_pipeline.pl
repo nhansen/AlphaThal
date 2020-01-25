@@ -278,7 +278,7 @@ sub launch_canucorrect {
     close SWARMCMD;
 
     my $dependency_string = ($check_jobid) ? "--dependency=afterok:$check_jobid" : '';
-    system("swarm $dependency_string -f $swarm_cmds --logdir $rh_dirs->{log_dir} -g 16 -t 4 > $rh_dirs->{log_dir}/canu.swarmsubmit.out");
+    system("swarm $dependency_string -f $swarm_cmds --logdir $rh_dirs->{log_dir} -b 5 -g 16 -t 4 > $rh_dirs->{log_dir}/canu.swarmsubmit.out");
     
     open CANU_JOBID, "$rh_dirs->{log_dir}/canu.swarmsubmit.out"
         or die "Couldn\'t open $rh_dirs->{log_dir}/canu.swarmsubmit.out\n";
