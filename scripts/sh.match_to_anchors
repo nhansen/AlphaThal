@@ -1,6 +1,8 @@
 #!/bin/bash
 # request 16g memory (for minimap2)
 
+module load samtools
+
 export FASTA=$1
 export SEQFILE=$2
 export REFFASTA=$3
