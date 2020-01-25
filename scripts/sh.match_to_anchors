@@ -13,7 +13,7 @@ export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 # run MASHmap:
 cd $SAMPLEDIR/MASHmap
 $MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/read_data/$FASTA $SEQFILE 85 500 $REPEATELEMENTSEQ
-export MASHMAPOUT=`echo $FASTA.mashmap.out | sed 's:.*/::' | sed 's/.fasta//'`
+export MASHMAPOUT=`echo $FASTA.mashmap85.out | sed 's:.*/::' | sed 's/.fasta//'`
 
 # run minimap2:
 cd $SAMPLEDIR/minimap2
