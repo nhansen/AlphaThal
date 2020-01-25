@@ -15,3 +15,5 @@ samtools sort $BASE.minimap.genome.bam -o $BASE.minimap.genome.sort.bam
 samtools index $BASE.minimap.genome.sort.bam
 
 rm $BASE.minimap.genome.sam $BASE.minimap.genome.bam
+
+

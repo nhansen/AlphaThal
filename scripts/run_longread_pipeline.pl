@@ -48,7 +48,7 @@ if ($localfastadir_opt) { # skip download and launch just the MASHmap/minimap jo
 
     if (!$skipdownload_opt) {
 
-        $dl_jobid = launch_match_swarm($biosample, $rh_directories, $localfastadir_opt, $reffasta, $platform_opt);
+        $dl_jobid = launch_match_swarm($biosample, $rh_directories, $localfastadir_opt, $reffasta, $baitregions, $platform_opt);
         print "Launched match swarm with job id $dl_jobid\n";
     }
 }
@@ -69,19 +69,14 @@ else { # probably have alignment results already
     $rh_directories = make_directories($sampledir);
 }
 
-my ($check_jobid, $merge_jobid, $create_jobid, $canu_jobid, $svrefine_jobid, $svrefinemerge_jobid, $convert_jobid);
+my ($check_jobid, $create_jobid, $canu_jobid, $svrefine_jobid, $svrefinemerge_jobid, $convert_jobid);
 if (!$skipcheck_opt) {
     $check_jobid = launch_checkdownload($biosample, $rh_directories, $dl_jobid);
     print "Launched check download job with job id $check_jobid\n";
 }
 
-if (!$skipmerge_opt) {
-    $merge_jobid = launch_mergeindexminimap($biosample, $rh_directories, $dl_jobid);
-    print "Launched merge minimap2 job with job id $merge_jobid\n";
-}
-
 if (!$skipreadtable_opt) {
-    $create_jobid = launch_createreadtable($biosample, $rh_directories, $merge_jobid, $check_jobid);
+    $create_jobid = launch_createreadtable($biosample, $rh_directories, $check_jobid);
     print "Launched create read table job with job id $create_jobid\n";
 }
 
@@ -173,6 +168,7 @@ sub launch_match_swarm {
     my $rh_dirs = shift;
     my $fastadir = shift;
     my $reffasta = shift;
+    my $baits = shift;
     my $platform = shift;
 
     print "SAMPLEDIR: $rh_dirs->{sampledir}\n";
@@ -203,7 +199,7 @@ sub launch_match_swarm {
         symlink "$fastadir/$fastafile", "$rh_dirs->{data_dir}/$fastafile"
             or die "Couldn\'t create symbolic link to $fastadir/$fastafile in $rh_dirs->{data_dir}: $!\n";
         my $opt_repeat = ($repeatseq) ? " $repeatseq" : "";
-        print COMMANDS $rh_dirs->{"scripts_dir"}."/sh.match_to_anchors $fastafile $flankseqs $reffasta $sample_dir $opt_repeat\n";
+        print COMMANDS $rh_dirs->{"scripts_dir"}."/sh.match_to_anchors $fastafile $flankseqs $reffasta $baits $sample_dir $opt_repeat\n";
     }
 
     close COMMANDS;
@@ -254,37 +250,9 @@ sub launch_checkdownload {
     }
 }
 
-sub launch_mergeindexminimap {
-    my $biosample = shift;
-    my $rh_dirs = shift;
-    my $dl_jobid = shift;
-
-    my $sample_dir = $rh_dirs->{sampledir};
-    my $sample = $sample_dir;
-    $sample =~ s/.*\///;
-
-    cp $scriptdir."/sh.mergeandindexminimap", $rh_dirs->{"scripts_dir"}."/sh.mergeandindexminimap";
-    my $dependency_string = ($dl_jobid) ? "--dependency=afterok:$dl_jobid" : '';
-    system("sbatch $dependency_string --time=24:00:00 --job-name=mergeminimap -o $rh_dirs->{log_dir}/\%x_\%j.out -e $rh_dirs->{log_dir}/\%x_\%j.err $rh_dirs->{scripts_dir}/sh.mergeandindexminimap $sample $sample_dir/minimap2 > $rh_dirs->{log_dir}/read_mm2.sbatchsubmit.out");
-
-    open MERGEINDEX_JOBID, "$rh_dirs->{log_dir}/read_mm2.sbatchsubmit.out"
-        or die "Couldn\'t open $rh_dirs->{log_dir}/read_mm2.sbatchsubmit.out\n";
-    my $mergeindex_jobid = <MERGEINDEX_JOBID>;
-    chomp $mergeindex_jobid;
-    close MERGEINDEX_JOBID;
-
-    if ($mergeindex_jobid =~ /^\d+$/) {
-        return $mergeindex_jobid;
-    }
-    else {
-        die "Unable to retrieve job id for merge and index job in $rh_dirs->{log_dir}/read_mm2.sbatchsubmit.out\n";
-    }
-}
-
 sub launch_createreadtable {
     my $biosample = shift;
     my $rh_dirs = shift;
-    my $merge_jobid = shift;
     my $check_jobid = shift;
 
     my $sample_dir = $rh_dirs->{sampledir};
@@ -292,14 +260,7 @@ sub launch_createreadtable {
     $sample =~ s/.*\///;
 
     cp $scriptdir."/sh.create_read_table", $rh_dirs->{"scripts_dir"}."/sh.create_read_table";
-    my @dependencies = ();
-    foreach my $jobid ($merge_jobid, $check_jobid) {
-        if ($jobid) {
-            push @dependencies, "afterok:$jobid";
-        }
-    }
-    my $afterok_string = join ",", @dependencies;
-    my $dependency_string = (@dependencies) ? "--dependency=$afterok_string" : '';
+    my $dependency_string = ($check_jobid) ? "--dependency=afterok:$check_jobid" : '';
     system("sbatch $dependency_string --time=24:00:00 --mem=18g --job-name=createreads -o $rh_dirs->{log_dir}/\%x_\%j.out -e $rh_dirs->{log_dir}/\%x_\%j.err $rh_dirs->{scripts_dir}/sh.create_read_table $sample $sample_dir $baitregions > $rh_dirs->{log_dir}/create_reads.sbatchsubmit.out");
 
     open CREATEREADS_JOBID, "$rh_dirs->{log_dir}/create_reads.sbatchsubmit.out"

@@ -4,16 +4,26 @@
 export FASTA=$1
 export SEQFILE=$2
 export REFFASTA=$3
-export SAMPLEDIR=$4
-export REPEATELEMENTSEQ=$5 # optional repeatelement consensus
+export BAITREGIONS=$4
+export SAMPLEDIR=$5
+export REPEATELEMENTSEQ=$6 # optional repeatelement consensus
 
 export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 
 # run MASHmap:
 cd $SAMPLEDIR/MASHmap
 $MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/read_data/$FASTA $SEQFILE 85 500 $REPEATELEMENTSEQ
+export MASHMAPOUT=`echo $FASTA.mashmap$PI.out | sed 's:.*/::' | sed 's/.fasta//'`
 
 # run minimap2:
 cd $SAMPLEDIR/minimap2
 export MASHFASTA=`echo $FASTA | sed 's:.*/::' | sed 's/\.fa/.mashmap.fa/'`
 $MAINSCRIPTS/sh.run_minimap2 $SAMPLEDIR/MASHmap/$MASHFASTA $REFFASTA
+export BASE=`echo $MASHFASTA | sed 's:.*/::' | sed 's/.fasta//' | sed 's/.gz//'`
+export BAMFILE=$BASE.minimap.genome.sort.bam
+
+# create a readtable:
+
+cd $SAMPLEDIR/read_table
+export READTABLE=`echo $FASTA | sed 's:.*/::' | sed 's/\.fa/.readtable.txt/'`
+$MAINSCRIPTS/create_read_table_faster.pl $BAITREGIONS $BAMFILE $MASHMAPOUT  > $READTABLE

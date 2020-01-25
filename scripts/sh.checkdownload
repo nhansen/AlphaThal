@@ -15,12 +15,9 @@ fi
 
 if [ $NOINDICES -eq $NOACCS ]; then
     echo "Success"
-    cd $SAMPLEDIR/MASHmap
-    for file in `ls *.mashmap.fasta.gz`; do gunzip -c $file; done | bgzip -c > $SAMPLE.mashmap85.all_reads.fasta.gz
-    samtools faidx $SAMPLE.mashmap85.all_reads.fasta.gz
-    rm *.mashmap.fastq.gz
-    rm *.mashmap.fasta.gz
+    exit 0;
 else
     echo "Incorrect number of index files!"
+    exit 1;
 fi
 
