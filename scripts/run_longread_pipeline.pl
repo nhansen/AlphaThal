@@ -15,7 +15,7 @@ if (!$TOPDIR) {
 
 our $SRAFILE = $ENV{'SRASAMPLEFILE'} || $ENV{'LONGREADTOPDIR'}.'/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt';
 
-my $Usage = qq!run_longread_pipeline.pl <--flankseqs flank_fasta> <--baitregions baits_bed> <--wideregions wideregions_bed> <--repeatseq repeat_consensus_fasta> <--scripts script_dir> <--localfastadir path_to_fasta_dir> <--reffasta path_to_reference_fasta> <--skipdownload> <--skipcheck> <--skipmerge> <--skipreadtable> <--skipcanucorrect> <--skipsvrefine> <biosample> <sample directory>\n!;
+my $Usage = qq!run_longread_pipeline.pl <--flankseqs flank_fasta> <--baitregions baits_bed> <--wideregions wideregions_bed> <--repeatseq repeat_consensus_fasta> <--scripts script_dir> <--localfastadir path_to_fasta_dir> <--reffasta path_to_reference_fasta> <--skipdownload> <--skipcheck> <--skipcanucorrect> <--skipsvrefine> <biosample> <sample directory>\n!;
 
 my $flankseqs;
 my $baitregions;
@@ -26,8 +26,8 @@ my $repeatseq = ''; # optional repeat consensus to gather extra reads from
 my $localfastadir_opt; # optional local directory with long read fasta files to screen
 my $platform_opt; # option to specify the platform of the sequence
 
-my ($skipdownload_opt, $skipcheck_opt, $skipmerge_opt, $skipreadtable_opt, $skipcanucorrect_opt, $skipsvrefine_opt);
-GetOptions("flankseqs=s" => \$flankseqs, "baitregions=s" => \$baitregions, "wideregions=s" => \$wideregions, "scripts=s" => \$scriptdir, "repeatseq=s" => \$repeatseq, "skipdownload" => \$skipdownload_opt, "skipcheck" => \$skipcheck_opt, "skipmerge" => \$skipmerge_opt, "skipreadtable" => \$skipreadtable_opt, "skipcanucorrect" => \$skipcanucorrect_opt, "skipsvrefine" => \$skipsvrefine_opt, "localfastadir=s" => \$localfastadir_opt, "reffasta=s" => \$reffasta, "platform=s" => \$platform_opt);
+my ($skipdownload_opt, $skipcheck_opt, $skipcanucorrect_opt, $skipsvrefine_opt);
+GetOptions("flankseqs=s" => \$flankseqs, "baitregions=s" => \$baitregions, "wideregions=s" => \$wideregions, "scripts=s" => \$scriptdir, "repeatseq=s" => \$repeatseq, "skipdownload" => \$skipdownload_opt, "skipcheck" => \$skipcheck_opt, "skipcanucorrect" => \$skipcanucorrect_opt, "skipsvrefine" => \$skipsvrefine_opt, "localfastadir=s" => \$localfastadir_opt, "reffasta=s" => \$reffasta, "platform=s" => \$platform_opt);
 
 $#ARGV==1
     or die "$Usage";
@@ -69,24 +69,19 @@ else { # probably have alignment results already
     $rh_directories = make_directories($sampledir);
 }
 
-my ($check_jobid, $create_jobid, $canu_jobid, $svrefine_jobid, $svrefinemerge_jobid, $convert_jobid);
+my ($check_jobid, $canu_jobid, $svrefine_jobid, $svrefinemerge_jobid, $convert_jobid);
 if (!$skipcheck_opt) {
     $check_jobid = launch_checkdownload($biosample, $rh_directories, $dl_jobid);
     print "Launched check download job with job id $check_jobid\n";
 }
 
-if (!$skipreadtable_opt) {
-    $create_jobid = launch_createreadtable($biosample, $rh_directories, $check_jobid);
-    print "Launched create read table job with job id $create_jobid\n";
-}
-
 if (!$skipcanucorrect_opt) {
-    $canu_jobid = launch_canucorrect($biosample, $rh_directories, $create_jobid);
+    $canu_jobid = launch_canucorrect($biosample, $rh_directories, $check_jobid);
     print "Launched canu correct job with job id $canu_jobid\n";
 }
 
 if (!$skipsvrefine_opt) {
-    $svrefine_jobid = launch_svrefine($biosample, $rh_directories, $create_jobid, $canu_jobid);
+    $svrefine_jobid = launch_svrefine($biosample, $rh_directories, $canu_jobid);
     print "Launched svrefine job with job id $svrefine_jobid\n";
     $svrefinemerge_jobid = launch_svrefinemerge($biosample, $rh_directories, $svrefine_jobid);
     print "Launched mummer BAM merge job with job id $svrefinemerge_jobid\n";
@@ -205,7 +200,7 @@ sub launch_match_swarm {
     close COMMANDS;
     close FASTAFILES;
 
-    system("swarm --job-name matchtoanchors --time 32:00:00 --logdir $rh_dirs->{log_dir} --maxrunning 50 -f $commandfile -g 16 > $rh_dirs->{log_dir}/matchtoanchors.swarmsubmit.out");
+    system("swarm --job-name matchtoanchors --time 32:00:00 --logdir $rh_dirs->{log_dir} -f $commandfile -g 16 > $rh_dirs->{log_dir}/matchtoanchors.swarmsubmit.out");
 
     open DLAM_JOBID, "$rh_dirs->{log_dir}/matchtoanchors.swarmsubmit.out"
         or die "Couldn\'t open $rh_dirs->{log_dir}/matchtoanchors.swarmsubmit.out\n";
@@ -250,37 +245,10 @@ sub launch_checkdownload {
     }
 }
 
-sub launch_createreadtable {
-    my $biosample = shift;
-    my $rh_dirs = shift;
-    my $check_jobid = shift;
-
-    my $sample_dir = $rh_dirs->{sampledir};
-    my $sample = $sample_dir;
-    $sample =~ s/.*\///;
-
-    cp $scriptdir."/sh.create_read_table", $rh_dirs->{"scripts_dir"}."/sh.create_read_table";
-    my $dependency_string = ($check_jobid) ? "--dependency=afterok:$check_jobid" : '';
-    system("sbatch $dependency_string --time=24:00:00 --mem=18g --job-name=createreads -o $rh_dirs->{log_dir}/\%x_\%j.out -e $rh_dirs->{log_dir}/\%x_\%j.err $rh_dirs->{scripts_dir}/sh.create_read_table $sample $sample_dir $baitregions > $rh_dirs->{log_dir}/create_reads.sbatchsubmit.out");
-
-    open CREATEREADS_JOBID, "$rh_dirs->{log_dir}/create_reads.sbatchsubmit.out"
-        or die "Couldn\'t open $rh_dirs->{log_dir}/create_reads.sbatchsubmit.out\n";
-    my $create_jobid = <CREATEREADS_JOBID>;
-    chomp $create_jobid;
-    close CREATEREADS_JOBID;
-
-    if ($create_jobid =~ /^\d+$/) {
-        return $create_jobid;
-    }
-    else {
-        die "Unable to retrieve job id for create read table job in $rh_dirs->{log_dir}/create_reads.sbatchsubmit.out\n";
-    }
-}
-
 sub launch_canucorrect {
     my $biosample = shift;
     my $rh_dirs = shift;
-    my $create_jobid = shift;
+    my $check_jobid = shift;
 
     my $sample_dir = $rh_dirs->{sampledir};
     my $sample = $sample_dir;
@@ -309,7 +277,7 @@ sub launch_canucorrect {
     }
     close SWARMCMD;
 
-    my $dependency_string = ($create_jobid) ? "--dependency=afterok:$create_jobid" : '';
+    my $dependency_string = ($check_jobid) ? "--dependency=afterok:$check_jobid" : '';
     system("swarm $dependency_string -f $swarm_cmds --logdir $rh_dirs->{log_dir} -g 16 -t 4 > $rh_dirs->{log_dir}/canu.swarmsubmit.out");
     
     open CANU_JOBID, "$rh_dirs->{log_dir}/canu.swarmsubmit.out"
@@ -330,7 +298,6 @@ sub launch_canucorrect {
 sub launch_svrefine {
     my $biosample = shift;
     my $rh_dirs = shift;
-    my $create_jobid = shift;
     my $canu_jobid = shift;
 
     my $sample_dir = $rh_dirs->{sampledir};
@@ -363,9 +330,6 @@ sub launch_svrefine {
     my @dependencies = ();
     if ($canu_jobid) {
         push @dependencies, "afterany:$canu_jobid";
-    }
-    if ($create_jobid) {
-        push @dependencies, "afterok:$create_jobid";
     }
     my $dependency_string = (@dependencies) ? join ',', @dependencies : "";
     $dependency_string = "--dependency=$dependency_string" if ($dependency_string);

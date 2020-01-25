@@ -25,5 +25,5 @@ export BAMFILE=$BASE.minimap.genome.sort.bam
 # create a readtable:
 
 cd $SAMPLEDIR/read_table
-export READTABLE=`echo $FASTA | sed 's:.*/::' | sed 's/\.fa/.readtable.txt/'`
+export READTABLE=$BASE.readtable.txt
 $MAINSCRIPTS/create_read_table_faster.pl $BAITREGIONS $BAMFILE $MASHMAPOUT  > $READTABLE
