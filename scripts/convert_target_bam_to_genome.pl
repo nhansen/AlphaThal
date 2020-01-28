@@ -17,13 +17,13 @@ our $SCRIPTSDIR=$TOPDIR.'/scripts';
 
 my $Usage = qq!convert_target_bam_to_genome.pl <target bam file path> <target bed file>\n!;
 
-$#ARGV==2
+$#ARGV==1
     or die "$Usage";
 
 my $sample_bam = $ARGV[0];
 my $target_bedfile = $ARGV[1];
 
-my $rh_target_coords = read_target_coords();
+my $rh_target_coords = read_target_coords($target_bedfile);
 
 open SAM, "samtools view $sample_bam | ";
 
@@ -47,9 +47,10 @@ while (<SAM>) {
 close SAM;
 
 sub read_target_coords {
+    my $bedfile = shift;
 
-    open REF, $target_bedfile
-        or die "Couldn\'t open $target_bedfile: $!\n";
+    open REF, $bedfile
+        or die "Couldn\'t open $bedfile: $!\n";
 
     my %target_info = ();
     while (<REF>) {
