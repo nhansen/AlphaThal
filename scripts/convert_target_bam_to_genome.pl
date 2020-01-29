@@ -38,7 +38,7 @@ while (<SAM>) {
     my $target_start = $rh_target_coords->{$target_id}->{start};
 
     $fields[2] = $chrom;
-    $fields[3] = $pos + $target_start;
+    $fields[3] = $pos + $target_start - 1;
 
     my $read_string = join "\t", @fields;
     print "$read_string\n";
