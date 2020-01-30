@@ -69,7 +69,7 @@ else { # probably have alignment results already
     $rh_directories = make_directories($sampledir);
 }
 
-my ($check_jobid, $canu_jobid, $svrefine_jobid, $svrefinemerge_jobid, $convert_jobid);
+my ($check_jobid, $canu_jobid, $svrefine_jobid, $mummerbammerge_jobid, $convert_jobid);
 if (!$skipcheck_opt) {
     $check_jobid = launch_checkdownload($biosample, $rh_directories, $dl_jobid);
     print "Launched check download job with job id $check_jobid\n";
@@ -83,9 +83,9 @@ if (!$skipcanucorrect_opt) {
 if (!$skipsvrefine_opt) {
     $svrefine_jobid = launch_svrefine($biosample, $rh_directories, $canu_jobid);
     print "Launched svrefine job with job id $svrefine_jobid\n";
-    $svrefinemerge_jobid = launch_svrefinemerge($biosample, $rh_directories, $svrefine_jobid);
-    print "Launched mummer BAM merge job with job id $svrefinemerge_jobid\n";
-    $convert_jobid = launch_convert($biosample, $rh_directories, $wideregions, $reffasta, $svrefinemerge_jobid);
+    $mummerbammerge_jobid = launch_mummerbammerge($biosample, $rh_directories, $svrefine_jobid);
+    print "Launched mummer BAM merge job with job id $mummerbammerge_jobid\n";
+    $convert_jobid = launch_convert($biosample, $rh_directories, $wideregions, $reffasta, $mummerbammerge_jobid);
     print "Launched conversion job with job id $convert_jobid\n";
 }
 
@@ -350,7 +350,7 @@ sub launch_svrefine {
     }
 }
 
-sub launch_svrefinemerge {
+sub launch_mummerbammerge {
     my $biosample = shift;
     my $rh_dirs = shift;
     my $svrefine_jobid = shift;
@@ -360,19 +360,58 @@ sub launch_svrefinemerge {
     $sample =~ s/.*\///;
 
     # this job will merge all of the bam files of corrected reads into one:
-    cp $scriptdir."/sh.mergemummerbams", $rh_dirs->{"scripts_dir"}."/sh.mergemummerbams";
+ 
+    opendir ALIGNS, $rh_dirs->{svrefine_dir}
+        or die "Couldn\'t open $rh_dirs->{svrefine_dir} for reading: $!\n";
 
+    my @mummerbams = grep /\.fullheader\.sort\.bam$/, readdir ALIGNS;
+    closedir ALIGNS;
+
+    my $numbams = @mummerbams;
+    if ($numbams <= 1000) {
+        cp $scriptdir."/sh.mergemummerbams", $rh_dirs->{"scripts_dir"}."/sh.mergemummerbams";
+    }
+    else { # write our own merge script for a multi-pass merge:
+        my $mergescript = "$rh_dirs->{'scripts_dir'}/sh.mergemummerbams";
+        open MERGE, ">$mergescript"
+            or die "Couldn\'t open $mergescript for writing: $!\n";
+        print MERGE "#!/bin/bash\n\nmodule load samtools\n\n";
+        print MERGE "export SAMPLE=\$1\nexport SAMPLEDIR=\$2\n\ncd \$SAMPLEDIR/allele_aligns\n";
+
+        my @outputfiles = ();
+        my $outputfilenum = 1;
+        while (@mummerbams) {
+           my $thisoutput = "$sample.genome.sort.$outputfilenum.bam";
+           $outputfilenum++;
+           print MERGE "samtools merge -f $thisoutput ";
+           for (my $i=1; $i<= 1000; $i++) {
+               my $inputfile = shift @mummerbams;
+               if ($inputfile) {
+                   print MERGE " $inputfile";
+               }
+           }
+           print MERGE "\n";
+           push @outputfiles, $thisoutput;
+        }
+
+        my $output_bam_string = join ' ', @outputfiles;
+        print MERGE "\nsamtools merge -f \$SAMPLE.genome.bam $output_bam_string\n";
+        print MERGE "samtools sort \$SAMPLE.genome.bam -o \$SAMPLE.genome.sort.bam\n";
+        print MERGE "samtools index \$SAMPLE.genome.sort.bam\n";
+        close MERGE;
+    }
+    
     my $dependency_string = ($svrefine_jobid) ? "--dependency=afterok:$svrefine_jobid" : '';
     system("sbatch $dependency_string -o $rh_dirs->{log_dir}/\%x_\%j.out -e $rh_dirs->{log_dir}/\%x_\%j.err --job-name=mergesvrefine $rh_dirs->{scripts_dir}/sh.mergemummerbams $sample $sample_dir > $rh_dirs->{log_dir}/mergemummerbams.sbatchsubmit.out");
     
     open SVREFINEMERGE_JOBID, "$rh_dirs->{log_dir}/mergemummerbams.sbatchsubmit.out"
         or die "Couldn\'t open $rh_dirs->{log_dir}/mergemummerbams.sbatchsubmit.out\n";
-    my $svrefinemerge_jobid = <SVREFINEMERGE_JOBID>;
-    chomp $svrefinemerge_jobid;
+    my $mummerbammerge_jobid = <SVREFINEMERGE_JOBID>;
+    chomp $mummerbammerge_jobid;
     close SVREFINEMERGE_JOBID;
 
-    if ($svrefinemerge_jobid =~ /^\d+$/) {
-        return $svrefinemerge_jobid;
+    if ($mummerbammerge_jobid =~ /^\d+$/) {
+        return $mummerbammerge_jobid;
     }
     else {
         die "Unable to retrieve job id for SVrefine job in $rh_dirs->{log_dir}/mergemummerbams.sbatchsubmit.out\n";
@@ -384,7 +423,7 @@ sub launch_convert {
     my $rh_dirs = shift;
     my $widebedfile = shift;
     my $reffasta = shift;
-    my $svrefinemerge_jobid = shift;
+    my $mummerbammerge_jobid = shift;
 
     my $sample_dir = $rh_dirs->{sampledir};
     my $sample = $sample_dir;
@@ -392,7 +431,7 @@ sub launch_convert {
 
     cp $scriptdir."/sh.run_convert_bam", $rh_dirs->{"scripts_dir"}."/sh.run_convert_bam";
 
-    my $dependency_string = ($svrefinemerge_jobid) ? "--dependency=afterok:$svrefinemerge_jobid" : '';
+    my $dependency_string = ($mummerbammerge_jobid) ? "--dependency=afterok:$mummerbammerge_jobid" : '';
     system("sbatch $dependency_string --job-name=convertbam -o $rh_dirs->{log_dir}/\%x_\%j.out -e $rh_dirs->{log_dir}/\%x_\%j.err $rh_dirs->{scripts_dir}/sh.run_convert_bam $sample $widebedfile $reffasta > $rh_dirs->{log_dir}/convert.sbatchsubmit.out");
     
     open CONVERT_JOBID, "$rh_dirs->{log_dir}/convert.sbatchsubmit.out"
