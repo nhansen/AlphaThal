@@ -11,9 +11,8 @@ my $Usage = qq!merge_project_alt_alleles.pl <--baitregions baits_bed> <--scripts
 
 my $baitregions = '/data/nhansen/HERV_K_catalog/SVA_discovery/prep/anchor_baits/all_hervk_baits.bed';
 my $scriptdir='/data/nhansen/HERV_K_catalog/SVA_discovery/scripts';
-my $repeatseq = ''; # optional repeat consensus to gather extra reads from
 
-GetOptions( "baitregions=s" => \$baitregions, "scripts=s" => \$scriptdir, "repeatseq=s" => \$repeatseq );
+GetOptions( "baitregions=s" => \$baitregions, "scripts=s" => \$scriptdir );
 
 $#ARGV==1
     or die "$Usage";
