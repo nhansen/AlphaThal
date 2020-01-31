@@ -12,6 +12,8 @@ export REPEATELEMENTSEQ=$6 # optional repeatelement consensus
 
 export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 
+samtools faidx $SAMPLEDIR/read_data/$FASTA
+
 # run MASHmap:
 cd $SAMPLEDIR/MASHmap
 $MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/read_data/$FASTA $SEQFILE 85 500 $REPEATELEMENTSEQ
