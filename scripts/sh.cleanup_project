@@ -6,8 +6,10 @@ cd $SAMPLEDIR
 
 # cleanup SRA_data directory:
 
-rm -f SRA_data/*.fasta.gz
-rm -f SRA_data/*.fastq.gz
+if [ -d $SAMPLEDIR/SRA_data ]; then
+    rm -f SRA_data/*.fasta.gz
+    rm -f SRA_data/*.fastq.gz
+fi
 
 # cleanup MASHmap directory:
 

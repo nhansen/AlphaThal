@@ -7,7 +7,6 @@ export SAMPLEDIR=$3
 export PLATFORM=$4
 export REPEATELEMENTSEQ=$5 # optional repeatelement consensus
 
-#export MAINSCRIPTS=/data/nhansen/HERV_K_catalog/scripts
 export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 
 # retrieve accession and create fasta file:
