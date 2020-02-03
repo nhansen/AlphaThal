@@ -3,9 +3,10 @@
 
 export ACC=$1
 export SEQFILE=$2
-export SAMPLEDIR=$3
-export PLATFORM=$4
-export REPEATELEMENTSEQ=$5 # optional repeatelement consensus
+export REFFASTA=$3
+export SAMPLEDIR=$4
+export PLATFORM=$5
+export REPEATELEMENTSEQ=$6 # optional repeatelement consensus
 
 export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 
@@ -28,4 +29,4 @@ $MAINSCRIPTS/sh.run_mashmap $SAMPLEDIR/SRA_data/$ACC.fasta.gz $SEQFILE 85 500 $R
 # run minimap2:
 mkdir -p $SAMPLEDIR/minimap2
 cd $SAMPLEDIR/minimap2
-$MAINSCRIPTS/sh.run_minimap2 $SAMPLEDIR/MASHmap/$ACC.mashmap.fasta.gz
+$MAINSCRIPTS/sh.run_minimap2 $SAMPLEDIR/MASHmap/$ACC.mashmap.fasta.gz $REFFASTA
