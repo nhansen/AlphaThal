@@ -5,8 +5,13 @@ module load samtools
 export SAMPLE=$1
 export SAMPLEDIR=$2
 
+export MAINSCRIPTS=$LONGREADTOPDIR/scripts
+
 cd $SAMPLEDIR/allele_aligns
-samtools merge $SAMPLE.genome.bam *.fullheader.sort.bam -f
+
+ls $SAMPLEDIR/allele_aligns/*.genome.fullheader.sort.bam > $SAMPLEDIR/allele_aligns/files_to_merge.fof
+
+$MAINSCRIPTS/multi_merge_bams.pl $SAMPLEDIR/allele_aligns/files_to_merge.fof 1000 $SAMPLE.genome.bam
 samtools sort $SAMPLE.genome.bam -o $SAMPLE.genome.sort.bam
 samtools index $SAMPLE.genome.sort.bam
 
