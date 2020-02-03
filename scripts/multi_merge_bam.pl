@@ -41,8 +41,8 @@ while (@filenames) {
             my $mergenum = @final_files_to_merge;
             $mergenum++;
             my $outputbam = 'smallmerge.'.$mergenum.'.bam';
-            system("samtools merge -o $outputbam $inputstring")==0
-                or die "Couldn\'t merge: samtools merge -o $outputbam $inputstring\n";
+            system("samtools merge -f $outputbam $inputstring")==0
+                or die "Couldn\'t merge: samtools merge -f $outputbam $inputstring\n";
             push @final_files_to_merge, $outputbam;
         }
         @smallgroup_to_merge = ();
@@ -52,6 +52,6 @@ while (@filenames) {
 # merge the final set:
 
 my $inputstring = join ' ', @final_files_to_merge;
-system("samtools merge -o $final_output_bam $inputstring")==0
+system("samtools merge -f $final_output_bam $inputstring")==0
     or die "Unable to merge merged files $inputstring into final bam $final_output_bam\n";
 
