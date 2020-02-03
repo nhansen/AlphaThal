@@ -360,47 +360,7 @@ sub launch_mummerbammerge {
     my $sample = $sample_dir;
     $sample =~ s/.*\///;
 
-    # this job will merge all of the bam files of corrected reads into one:
- 
-    opendir ALIGNS, $rh_dirs->{svrefine_dir}
-        or die "Couldn\'t open $rh_dirs->{svrefine_dir} for reading: $!\n";
-
-    my @mummerbams = grep /\.fullheader\.sort\.bam$/, readdir ALIGNS;
-    closedir ALIGNS;
-
-    my $numbams = @mummerbams;
-    if ($numbams <= 1000) {
-        cp $scriptdir."/sh.mergemummerbams", $rh_dirs->{"scripts_dir"}."/sh.mergemummerbams";
-    }
-    else { # write our own merge script for a multi-pass merge:
-        my $mergescript = "$rh_dirs->{'scripts_dir'}/sh.mergemummerbams";
-        open MERGE, ">$mergescript"
-            or die "Couldn\'t open $mergescript for writing: $!\n";
-        print MERGE "#!/bin/bash\n\nmodule load samtools\n\n";
-        print MERGE "export SAMPLE=\$1\nexport SAMPLEDIR=\$2\n\ncd \$SAMPLEDIR/allele_aligns\n";
-
-        my @outputfiles = ();
-        my $outputfilenum = 1;
-        while (@mummerbams) {
-           my $thisoutput = "$sample.genome.sort.$outputfilenum.bam";
-           $outputfilenum++;
-           print MERGE "samtools merge -f $thisoutput ";
-           for (my $i=1; $i<= 1000; $i++) {
-               my $inputfile = shift @mummerbams;
-               if ($inputfile) {
-                   print MERGE " $inputfile";
-               }
-           }
-           print MERGE "\n";
-           push @outputfiles, $thisoutput;
-        }
-
-        my $output_bam_string = join ' ', @outputfiles;
-        print MERGE "\nsamtools merge -f \$SAMPLE.genome.bam $output_bam_string\n";
-        print MERGE "samtools sort \$SAMPLE.genome.bam -o \$SAMPLE.genome.sort.bam\n";
-        print MERGE "samtools index \$SAMPLE.genome.sort.bam\n";
-        close MERGE;
-    }
+    cp $scriptdir."/sh.mergemummerbams", $rh_dirs->{"scripts_dir"}."/sh.mergemummerbams";
     
     my $dependency_string = ($svrefine_jobid) ? "--dependency=afterok:$svrefine_jobid" : '';
     system("sbatch $dependency_string -o $rh_dirs->{log_dir}/\%x_\%j.out -e $rh_dirs->{log_dir}/\%x_\%j.err --job-name=mergesvrefine $rh_dirs->{scripts_dir}/sh.mergemummerbams $sample $sample_dir > $rh_dirs->{log_dir}/mergemummerbams.sbatchsubmit.out");
