@@ -62,7 +62,7 @@ elsif (!$skipdownload_opt) {
     
     $rh_directories = make_directories($sampledir);
     
-    $dl_jobid = launch_download_swarm($biosample, $rh_directories, $reffasta);
+    $dl_jobid = launch_download_swarm($biosample, $rh_directories, $reffasta, $baitregions);
     print "Launched download swarm with job id $dl_jobid\n";
 }
 else { # probably have alignment results already
@@ -113,6 +113,7 @@ sub launch_download_swarm {
     my $biosample = shift;
     my $rh_dirs = shift;
     my $ref_fasta = shift;
+    my $baits = shift;
 
     print "SAMPLEDIR: $rh_dirs->{sampledir}\n";
 
@@ -136,7 +137,7 @@ sub launch_download_swarm {
 
         print SRRACC "$srr_acc\t$platform\n";
         my $opt_repeat = ($repeatseq) ? " $repeatseq" : "";
-        print COMMANDS $rh_dirs->{"scripts_dir"}."/sh.download_and_match_to_anchors $srr_acc $flankseqs $ref_fasta $sample_dir \"$platform\"$opt_repeat\n";
+        print COMMANDS $rh_dirs->{"scripts_dir"}."/sh.download_and_match_to_anchors $srr_acc $flankseqs $ref_fasta $baits $sample_dir \"$platform\"$opt_repeat\n";
     }
 
     close COMMANDS;
