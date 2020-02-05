@@ -11,6 +11,8 @@ export REPEATELEMENTSEQ=$7 # optional repeatelement consensus
 
 export MAINSCRIPTS=$LONGREADTOPDIR/scripts
 
+module load samtools
+
 # retrieve accession and create fasta file:
 mkdir -p $SAMPLEDIR/SRA_data
 
