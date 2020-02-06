@@ -16,6 +16,7 @@ if (!$TOPDIR) {
 our $CURRENTDIR = $ENV{'PWD'};
 
 if ($TOPDIR ne $CURRENTDIR) {
+    die "LONGREADTOPDIR variable is not set to current directory";
     print "LONGREADTOPDIR variable is not set to current directory--reset to current directory? ";
     my $answer = <STDIN>;
     chomp $answer;
