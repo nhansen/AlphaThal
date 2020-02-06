@@ -306,7 +306,7 @@ sub launch_canucorrect {
         or die "Couldn\'t open $swarm_cmds for writing: $!\n";
 
     foreach my $hervk_name (@hervk_names) {
-        print SWARMCMD "$rh_dirs->{scripts_dir}/sh.run_canu_correct $sample $hervk_name\n";
+        print SWARMCMD "$rh_dirs->{scripts_dir}/sh.run_canu_correct $sample $hervk_name $rh_dirs->{sampledir}\n";
     }
     close SWARMCMD;
 

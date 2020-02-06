@@ -7,21 +7,20 @@ module load canu
 
 export SAMPLE=$1
 export TARGETID=$2
+export SAMPLEDIR=$3
 
-export RGDIR=$LONGREADTOPDIR/refgenotype
+cd $SAMPLEDIR
 
-cd $RGDIR/$SAMPLE
+mkdir -p $SAMPLEDIR/canu_correct/$TARGETID
+cd $SAMPLEDIR/canu_correct/$TARGETID
 
-mkdir -p $RGDIR/$SAMPLE/canu_correct/$TARGETID
-cd $RGDIR/$SAMPLE/canu_correct/$TARGETID
-
-export FASTA=$RGDIR/$SAMPLE/canu_correct/$TARGETID/$TARGETID.straddlereads.fasta
+export FASTA=$SAMPLEDIR/canu_correct/$TARGETID/$TARGETID.straddlereads.fasta
 rm -f $FASTA
-for readtable in `ls $RGDIR/$SAMPLE/read_table/*.readtable.txt`; do
+for readtable in `ls $SAMPLEDIR/read_table/*.readtable.txt`; do
     echo $readtable
     for readname in `awk -F"\t" '$1==ENVIRON["TARGETID"] && $5!="NA" && $8!="NA" {print $2}' $readtable | sort | uniq`; do
         export READNAME=$readname
-        for fastafile in `ls $RGDIR/$SAMPLE/MASHmap/*.mashmap.fasta.gz`; do 
+        for fastafile in `ls $SAMPLEDIR/MASHmap/*.mashmap.fasta.gz`; do 
             export READ=`awk '$1==ENVIRON["READNAME"] {print $1}' $fastafile.fai`
             if [ $READ ]; then
                 samtools faidx $fastafile $readname >> $FASTA
@@ -31,6 +30,6 @@ for readtable in `ls $RGDIR/$SAMPLE/read_table/*.readtable.txt`; do
 done
 
 if [ -e $FASTA ]; then
-    canu -correct -genomeSize=20k -pacbio-raw $FASTA usegrid=0 corOutCoverage=100 corMinCoverage=0 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $TARGETID -d $RGDIR/$SAMPLE/canu_correct/$TARGETID
+    canu -correct -genomeSize=20k -pacbio-raw $FASTA usegrid=0 corOutCoverage=100 corMinCoverage=0 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $TARGETID -d $SAMPLEDIR/canu_correct/$TARGETID
 fi
 
