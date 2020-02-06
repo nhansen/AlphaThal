@@ -356,7 +356,7 @@ sub launch_svrefine {
         or die "Couldn\'t open $swarm_cmds for writing: $!\n";
 
     foreach my $hervk_name (@hervk_names) {
-        print SWARMCMD "$rh_dirs->{scripts_dir}/sh.aligncorrectedreads $sample $hervk_name\n";
+        print SWARMCMD "$rh_dirs->{scripts_dir}/sh.aligncorrectedreads $sample $hervk_name $rh_dirs->{sampledir}\n";
     }
     close SWARMCMD;
 

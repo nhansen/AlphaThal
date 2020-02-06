@@ -9,8 +9,7 @@ export PREPDIR=$LONGREADTOPDIR/prep
 
 export SAMPLE=$1
 export TARGETID=$2
-
-export SAMPLEDIR=$LONGREADTOPDIR/refgenotype/$SAMPLE
+export SAMPLEDIR=$3
 
 export HEADERFILE=$PREPDIR/allele_sequences/complete_header_seqs.total.sam
 
