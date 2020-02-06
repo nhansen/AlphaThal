@@ -38,3 +38,17 @@ done
 
 rmdir canu_corrected_reads
 
+# cleanup allele_aligns directory:
+
+rm allele_aligns/smallmerge*.bam
+rm allele_aligns/*.genome.fullheader*.bam*
+rm allele_aligns/*.sam
+rm allele_aligns/*.mcoords
+rm allele_aligns/*.1coords
+rm allele_aligns/*.mdelta
+rm allele_aligns/*.1delta
+rm allele_aligns/*.bed
+rm allele_aligns/*.snps
+rm allele_aligns/*diff
+
+date > project_cleanup_date
