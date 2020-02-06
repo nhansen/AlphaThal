@@ -13,9 +13,24 @@ if (!$TOPDIR) {
     die "You must set the LONGREADTOPDIR environment variable before running this script!\n";
 }
 
+our $CURRENTDIR = $ENV{'PWD'};
+
+if ($TOPDIR ne $CURRENTDIR) {
+    print "LONGREADTOPDIR variable is not set to current directory--reset to current directory? ";
+    my $answer = <STDIN>;
+    chomp $answer;
+    if ($answer =~ /^[Yy]/) {
+        print "Resetting LONGREADTOPDIR to $CURRENTDIR!\n";
+        $ENV{'LONGREADTOPDIR'} = $CURRENTDIR;
+    }
+    else {
+        print "LONGREADTOPDIR will remain as $TOPDIR!\n";
+    }
+}
+
 our $SRAFILE = $ENV{'SRASAMPLEFILE'} || $ENV{'LONGREADTOPDIR'}.'/SRASamples/SRAHumanPacBioWGSRuns.linux.051119.txt';
 
-my $Usage = qq!run_longread_pipeline.pl <--flankseqs flank_fasta> <--baitregions baits_bed> <--wideregions wideregions_bed> <--repeatseq repeat_consensus_fasta> <--scripts script_dir> <--localfastadir path_to_fasta_dir> <--reffasta path_to_reference_fasta> <--skipdownload> <--skipcheck> <--skipcanucorrect> <--skipsvrefine> <biosample> <sample directory>\n!;
+my $Usage = qq!run_longread_pipeline.pl <--flankseqs flank_fasta> <--baitregions baits_bed> <--wideregions wideregions_bed> <--repeatseq repeat_consensus_fasta> <--scripts script_dir> <--localfastadir path_to_fasta_dir> <--reffasta path_to_reference_fasta> <--relaunch> <--skipdownload> <--skipcheck> <--skipcanucorrect> <--skipsvrefine> <biosample> <sample directory>\n!;
 
 my $flankseqs;
 my $baitregions;
@@ -26,8 +41,8 @@ my $repeatseq = ''; # optional repeat consensus to gather extra reads from
 my $localfastadir_opt; # optional local directory with long read fasta files to screen
 my $platform_opt; # option to specify the platform of the sequence
 
-my ($skipdownload_opt, $skipcheck_opt, $skipcanucorrect_opt, $skipsvrefine_opt);
-GetOptions("flankseqs=s" => \$flankseqs, "baitregions=s" => \$baitregions, "wideregions=s" => \$wideregions, "scripts=s" => \$scriptdir, "repeatseq=s" => \$repeatseq, "skipdownload" => \$skipdownload_opt, "skipcheck" => \$skipcheck_opt, "skipcanucorrect" => \$skipcanucorrect_opt, "skipsvrefine" => \$skipsvrefine_opt, "localfastadir=s" => \$localfastadir_opt, "reffasta=s" => \$reffasta, "platform=s" => \$platform_opt);
+my ($skipdownload_opt, $skipcheck_opt, $skipcanucorrect_opt, $skipsvrefine_opt, $relaunch_opt);
+GetOptions("flankseqs=s" => \$flankseqs, "baitregions=s" => \$baitregions, "wideregions=s" => \$wideregions, "scripts=s" => \$scriptdir, "repeatseq=s" => \$repeatseq, "relaunch" => \$relaunch_opt, "skipdownload" => \$skipdownload_opt, "skipcheck" => \$skipcheck_opt, "skipcanucorrect" => \$skipcanucorrect_opt, "skipsvrefine" => \$skipsvrefine_opt, "localfastadir=s" => \$localfastadir_opt, "reffasta=s" => \$reffasta, "platform=s" => \$platform_opt);
 
 $#ARGV==1
     or die "$Usage";
@@ -48,7 +63,7 @@ if ($localfastadir_opt) { # skip download and launch just the MASHmap/minimap jo
 
     if (!$skipdownload_opt) {
 
-        $dl_jobid = launch_match_swarm($biosample, $rh_directories, $localfastadir_opt, $reffasta, $baitregions, $platform_opt);
+        $dl_jobid = launch_match_swarm($biosample, $rh_directories, $localfastadir_opt, $reffasta, $baitregions, $platform_opt, $relaunch_opt);
         print "Launched match swarm with job id $dl_jobid\n";
     }
 }
@@ -62,7 +77,7 @@ elsif (!$skipdownload_opt) {
     
     $rh_directories = make_directories($sampledir);
     
-    $dl_jobid = launch_download_swarm($biosample, $rh_directories, $reffasta, $baitregions);
+    $dl_jobid = launch_download_swarm($biosample, $rh_directories, $reffasta, $baitregions, $relaunch_opt);
     print "Launched download swarm with job id $dl_jobid\n";
 }
 else { # probably have alignment results already
@@ -114,15 +129,18 @@ sub launch_download_swarm {
     my $rh_dirs = shift;
     my $ref_fasta = shift;
     my $baits = shift;
+    my $relaunch_opt = shift;
 
     print "SAMPLEDIR: $rh_dirs->{sampledir}\n";
 
     my $sample_dir = $rh_dirs->{sampledir};
-    my $accfile = "$sample_dir/SRR_Acc_List.txt";
+    my $accfile = ($relaunch_opt) ? "$sample_dir/SRR_Acc_List_relaunched.txt" : "$sample_dir/SRR_Acc_List.txt";
     my $rh_sample_accessions = retrieve_sample_accessions();
 
-    cp $scriptdir."/sh.download_and_match_to_anchors", $rh_dirs->{"scripts_dir"}."/sh.download_and_match_to_anchors";
-    my $commandfile = $rh_dirs->{"scripts_dir"}."/sh.downloadswarm";
+    if (!$relaunch_opt) {
+        cp $scriptdir."/sh.download_and_match_to_anchors", $rh_dirs->{"scripts_dir"}."/sh.download_and_match_to_anchors";
+    }
+    my $commandfile = ($relaunch_opt) ? $rh_dirs->{"scripts_dir"}."/sh.downloadswarmrelaunch" : $rh_dirs->{"scripts_dir"}."/sh.downloadswarm";
     open COMMANDS, ">$commandfile"
         or die "Couldn\'t open $commandfile for writing: $!\n";
 
@@ -134,6 +152,7 @@ sub launch_download_swarm {
         my $this_biosample = $rh_sample_accessions->{$srr_acc}->{'BioSample'};
 
         next if ((!$this_biosample) || ($this_biosample ne $biosample));
+        next if (($relaunch_opt) && ( -s ($rh_dirs->{"readtable_dir"}."/$srr_acc.mashmap.readtable.txt")));
 
         print SRRACC "$srr_acc\t$platform\n";
         my $opt_repeat = ($repeatseq) ? " $repeatseq" : "";
@@ -167,29 +186,41 @@ sub launch_match_swarm {
     my $reffasta = shift;
     my $baits = shift;
     my $platform = shift;
+    my $relaunch_opt = shift;
 
     print "SAMPLEDIR: $rh_dirs->{sampledir}\n";
 
     my $sample_dir = $rh_dirs->{sampledir};
-    my $fileoffiles = "$sample_dir/read_fasta_list.txt"; # create a file with fasta locations
+    my $fileoffiles = ($relaunch_opt) ? "$sample_dir/relaunched_fasta_list.txt" :
+                                        "$sample_dir/read_fasta_list.txt"; # create a file with fasta locations
 
-    cp $scriptdir."/sh.match_to_anchors", $rh_dirs->{"scripts_dir"}."/sh.match_to_anchors";
-    my $commandfile = $rh_dirs->{"scripts_dir"}."/sh.matchswarm";
+    my $commandfile = ($relaunch_opt) ? $rh_dirs->{"scripts_dir"}."/sh.matchswarmrelaunch" : 
+                                        $rh_dirs->{"scripts_dir"}."/sh.matchswarm";
+
     open COMMANDS, ">$commandfile"
         or die "Couldn\'t open $commandfile for writing: $!\n";
 
+    if (!$relaunch_opt) {
+        cp $scriptdir."/sh.match_to_anchors", $rh_dirs->{"scripts_dir"}."/sh.match_to_anchors";
+    }
+   
     open FASTAFILES, ">$fileoffiles"
         or die "Couldn\'t open $fileoffiles for writing: $!\n";
-
+    
     opendir FASTAS, $fastadir
         or die "Couldn\'t open directory $fastadir for reading: $!\n";
-
+    
     my @fastafiles = grep /\.fa(sta){0,1}(\.gz){0,1}$/, readdir FASTAS;
-
+        
     closedir FASTAS;
-
+    
     foreach my $fastafile (@fastafiles) {
         my $platform = $platform_opt || 'Unknown';
+
+        my $readtable_file = $fastafile;
+        $readtable_file =~ s/\.fa(sta){0,1}(\.gz){0,1}$/mashmap.readtable.txt/;
+
+        next if (($relaunch_opt) && (-s ($rh_dirs->{"readtable_dir"}."/$readtable_file")));
 
         print FASTAFILES "$fastadir/$fastafile\t$platform\n";
 
@@ -198,7 +229,7 @@ sub launch_match_swarm {
         my $opt_repeat = ($repeatseq) ? " $repeatseq" : "";
         print COMMANDS $rh_dirs->{"scripts_dir"}."/sh.match_to_anchors $fastafile $flankseqs $reffasta $baits $sample_dir $opt_repeat\n";
     }
-
+    
     close COMMANDS;
     close FASTAFILES;
 
