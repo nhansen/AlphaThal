@@ -30,6 +30,6 @@ for readtable in `ls $SAMPLEDIR/read_table/*.readtable.txt`; do
 done
 
 if [ -e $FASTA ]; then
-    canu -correct -genomeSize=20k -pacbio-raw $FASTA usegrid=0 corOutCoverage=100 corMinCoverage=0 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $TARGETID -d $SAMPLEDIR/canu_correct/$TARGETID
+    canu -correct -genomeSize=20k -pacbio-raw $FASTA usegrid=0 corOutCoverage=100 corMinCoverage=0 stopOnLowCoverage=4 -maxMemory=$(( SLURM_MEM_PER_NODE - 1 )) -maxThreads=$SLURM_CPUS_PER_TASK -p $TARGETID -d $SAMPLEDIR/canu_correct/$TARGETID 
 fi
 
