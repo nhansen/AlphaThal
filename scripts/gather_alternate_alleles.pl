@@ -15,8 +15,9 @@ our $REFGENODIR=$LONGREADTOPDIR.'/refgenotype';
 my $Usage = qq!gather_alternate_alleles.pl <element id> <merge directory name>\n!;
 
 my $minaltreads = 5;
+my $verbose = 0; # print out lots of info?
 
-GetOptions("minaltreads=i" => \$minaltreads );
+GetOptions("minaltreads=i" => \$minaltreads, verbose => \$verbose );
 
 $#ARGV==1
     or die "$Usage";
@@ -26,30 +27,44 @@ my $mergedirname = $ARGV[1];
 
 # read in structural variants with minimum number of reads:
 
-my ($ra_all_svs, $rh_hap_reads) = read_altalleles($element_id, "$MERGEDDIR/$mergedirname/targetvcfs/$element_id.merged.sorted.clustered.vcf.gz");
+my ($ra_all_svs, $rh_hap_reads) = read_altalleles($element_id, "$MERGEDDIR/$mergedirname/targetvcfs/$element_id.merged.sorted.clustered.vcf.gz", "$MERGEDDIR/$mergedirname/targetvcfs/$element_id.haplotype_svs.txt");
+
+my $ref_fasta = "$LONGREADTOPDIR/prep/allele_sequences/$element_id.widerregion.fasta";
+my $ref_allele = read_ref_allele($ref_fasta);
 
 my $hap_info_file = "$MERGEDDIR/$mergedirname/altalleleinfo/$element_id.althapreads.txt";
 my $haplotype_fasta_file = "$MERGEDDIR/$mergedirname/altalleleinfo/$element_id.althaps.fasta";
-my $ref_fasta = "$LONGREADTOPDIR/prep/allele_sequences/$element_id.widerregion.fasta";
-my $correctedreads_fasta_file = "$MERGEDDIR/$mergedirname/altalleleinfo/$element_id.correctedreads.fasta";
-
-my $ref_allele = read_ref_allele($ref_fasta);
-
 construct_alternate_haplotypes($ra_all_svs, $rh_hap_reads, $hap_info_file, $haplotype_fasta_file, $ref_allele);
 
+my $correctedreads_fasta_file = "$MERGEDDIR/$mergedirname/altalleleinfo/$element_id.correctedreads.fasta";
 write_corrected_read_fasta($rh_hap_reads, $correctedreads_fasta_file, $REFGENODIR);
+
+system("cross_match -tags -alignments -masklevel 0 $correctedreads_fasta_file $haplotype_fasta_file > $MERGEDDIR/$mergedirname/altalleleinfo/$element_id.reads_vs_althaps.cm.out");
 
 ########END MAIN#######
 
 sub read_altalleles {
     my $element_id = shift;
     my $merged_vcf_file = shift;
+    my $hap_file = shift;
 
-    my $rh_sv_reads = {};
-    my %all_reads = ();
+    my %sv_reads = (); # key is SV id, value is reference to an array of readnames
+    my %all_reads = (); # hash of all corrected readnames
     my @all_svs = (); # ordered list of all SVs for this targeted element
 
     my $merged_vcf_string = "gunzip -c $merged_vcf_file | ";
+    if (! (-e $merged_vcf_file)) {
+        my $unzipped_vcf = $merged_vcf_file;
+        $unzipped_vcf =~ s/\.vcf\.gz$/.vcf/;
+        if (-e $unzipped_vcf) {
+            $merged_vcf_string = $unzipped_vcf;
+        }
+        else {
+            die "No merged VCF file $merged_vcf_string for this target!\n";
+        }
+    }
+
+    my $sv_number = 1;
     open ALTS, $merged_vcf_string
         or die "Couldn\'t open $merged_vcf_string for reading: $!\n";
     while (<ALTS>) {
@@ -71,12 +86,16 @@ sub read_altalleles {
             die "Improper VCF file: $numclustersvs does not equal $numclusterreads for SV $svid!\n";
         }
 
-        next if ($minaltreads && $numclustersvs < $minaltreads);
+        #print "Read variant $svid with $numclustersvs clusters\n";
+
+        next if ($minaltreads && ($numclustersvs < $minaltreads));
 
         map { s/\.\d+$// } @cluster_reads;
 
-        $rh_sv_reads->{$svid} = [@cluster_reads];
-        push @all_svs, {'svid' => $svid, 'pos' => $pos, 'ref' => $refstring, 'alt' => $altstring};
+        $sv_reads{$svid} = [@cluster_reads];
+        my $renumbered_sv = "$element_id.SV$sv_number";
+        $sv_number++;
+        push @all_svs, {'renumberedid' => $renumbered_sv, 'svid' => $svid, 'pos' => $pos, 'ref' => $refstring, 'alt' => $altstring};
         foreach my $read (@cluster_reads) {
             $all_reads{$read} = 1;
         }
@@ -94,7 +113,7 @@ sub read_altalleles {
         my $hapstring = ''; # will append 0 if ref, 1 if alt for each SV
         foreach my $rh_sv (@all_svs) {
             my $sv = $rh_sv->{'svid'};
-            if (grep {$_ eq $read} @{$rh_sv_reads->{$sv}}) {
+            if (grep {$_ eq $read} @{$sv_reads{$sv}}) {
                 $hapstring .= '1';
             }
             else {
@@ -102,16 +121,8 @@ sub read_altalleles {
             }
         }
         # record hapstring:
+        #print "$read has hapstring $hapstring\n";
         push @{$haplotype_reads{$hapstring}}, $read;
-    }
-
-    # write out results:
-    
-    foreach my $hapstring (keys %haplotype_reads) {
-        print "$hapstring:\n";
-        foreach my $read (@{$haplotype_reads{$hapstring}}) {
-            print "\t$read\n";
-        }
     }
 
     return ([@all_svs], {%haplotype_reads});
@@ -128,23 +139,25 @@ sub construct_alternate_haplotypes {
         or die "Couldn\'t open $info_file for writing: $!\n";
     open FASTA, ">$fasta_file"
         or die "Couldn\'t open $fasta_file for writing: $!\n";
-    # Write reference allele:
+    # Write reference allele to ref fasta file:
     my $splitallele = $ref_allele;
     $splitallele =~ s/(.{50})/$1\n/g;
     chomp $splitallele;
     print FASTA ">$element_id.REF\n$splitallele\n";
     my $sv_number = 1;
-    foreach my $hapstring (keys %{$rh_hap_reads}) {
+    foreach my $hapstring (sort {$b cmp $a} keys %{$rh_hap_reads}) {
         my $alt_allele = "$element_id.ALT$sv_number";
         my $reversehapstring = reverse $hapstring;
         my $allele = $ref_allele;
         my $index = 0;
         my @includedsvs = ();
-        while (($reversehapstring ne '') && (my $nextgeno = chop $reversehapstring)) {
+        my $offset = 0;
+        while ($reversehapstring ne '') {
+            my $nextgeno = chop $reversehapstring;
             if ($nextgeno eq '1') {
-                $allele = apply_sv($allele, $ra_all_svs, $index);
+                ($allele, $offset) = apply_sv($allele, $ra_all_svs, $index, $offset);
                 push @includedsvs, $ra_all_svs->[$index]->{'svid'};
-                print INFO "HAP\t$alt_allele\t$ra_all_svs->[$index]->{'svid'}\n";
+                print INFO "HAP\t$alt_allele\t$ra_all_svs->[$index]->{'svid'}\t$ra_all_svs->[$index]->{'renumberedid'}\n";
             }
             $index++;
         }
@@ -200,8 +213,9 @@ sub apply_sv {
     my $allele = shift;
     my $ra_svs = shift;
     my $index = shift;
+    my $offset = shift;
 
-    my $pos = $ra_svs->[$index]->{pos};
+    my $pos = $ra_svs->[$index]->{pos} + $offset;
     my $ref = $ra_svs->[$index]->{ref};
     my $reflength = length($ref);
     my $alt = $ra_svs->[$index]->{alt};
@@ -210,11 +224,9 @@ sub apply_sv {
     substr($allele, $pos-1, $reflength) = $alt;
 
     my $position_change = $altlength - $reflength;
-    for (my $i=$index+1; $i<=$#{$ra_svs}; $i++) {
-        $ra_svs->[$i]->{pos} += $position_change;
-    }
+    my $newoffset = $offset + $position_change;
 
-    return $allele;
+    return ($allele, $newoffset);
 }
 
 sub read_ref_allele {
