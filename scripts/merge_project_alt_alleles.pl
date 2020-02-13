@@ -7,6 +7,28 @@ use Getopt::Long;
 
 use strict;
 
+our $TOPDIR = $ENV{'LONGREADTOPDIR'};
+
+if (!$TOPDIR) {
+    die "You must set the LONGREADTOPDIR environment variable before running this script!\n";
+}
+
+our $CURRENTDIR = $ENV{'PWD'};
+
+if ($TOPDIR ne $CURRENTDIR) {
+    die "LONGREADTOPDIR variable is not set to current directory";
+    print "LONGREADTOPDIR variable is not set to current directory--reset to current directory? ";
+    my $answer = <STDIN>;
+    chomp $answer;
+    if ($answer =~ /^[Yy]/) {
+        print "Resetting LONGREADTOPDIR to $CURRENTDIR!\n";
+        $ENV{'LONGREADTOPDIR'} = $CURRENTDIR;
+    }
+    else {
+        print "LONGREADTOPDIR will remain as $TOPDIR!\n";
+    }
+}
+
 my $Usage = qq!merge_project_alt_alleles.pl <--baitregions baits_bed> <--scripts script_dir> <project directory> <merge directory name>\n!;
 
 my $baitregions = '/data/nhansen/HERV_K_catalog/SVA_discovery/prep/anchor_baits/all_hervk_baits.bed';
