@@ -93,7 +93,7 @@ open ALLHAPS, "| gzip -c > $rh_dirs->{haplotypedatadir}/target_haplotypes.fasta.
 open HAPCOUNTS, ">$rh_dirs->{haplotypedatadir}/haplotype_read_counts.txt"
     or die "Couldn\'t open $rh_dirs->{haplotypedatadir}/haplotype_read_counts.txt for writing: $!\n";
 
-my $target_bed_file = "$LONGREADTOPDIR/prep/sva_baits/ref_and_nonref_sva_regions.labeled.widerregion.bed";
+my $target_bed_file = "$LONGREADTOPDIR/prep/ref_and_nonref.wideregions.bed";
 my %target_data = read_target_positions($target_bed_file);
 
 foreach my $althapfasta (sort @althap_fastas) {
