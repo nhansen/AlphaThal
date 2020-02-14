@@ -9,7 +9,27 @@ use Getopt::Long;
 
 use strict;
 
-our $LONGREADTOPDIR=$ENV{'LONGREADTOPDIR'} || '/data/nhansen/HERV_K_catalog/SVA_discovery';
+our $LONGREADTOPDIR = $ENV{'LONGREADTOPDIR'};
+
+if (!$LONGREADTOPDIR) {
+    die "You must set the LONGREADTOPDIR environment variable before running this script!\n";
+}
+
+our $CURRENTDIR = $ENV{'PWD'};
+
+if ($LONGREADTOPDIR ne $CURRENTDIR) {
+    die "LONGREADTOPDIR variable is not set to current directory";
+    print "LONGREADTOPDIR variable is not set to current directory--reset to current directory? ";
+    my $answer = <STDIN>;
+    chomp $answer;
+    if ($answer =~ /^[Yy]/) {
+        print "Resetting LONGREADTOPDIR to $CURRENTDIR!\n";
+        $ENV{'LONGREADTOPDIR'} = $CURRENTDIR;
+    }
+    else {
+        print "LONGREADTOPDIR will remain as $TOPDIR!\n";
+    }
+}
 our $MERGEDDIR=$LONGREADTOPDIR.'/refgenotype/mergedSVs';
 our $REFGENODIR=$LONGREADTOPDIR.'/refgenotype';
 
