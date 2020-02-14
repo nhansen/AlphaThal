@@ -11,6 +11,17 @@ use strict;
 
 our $LONGREADTOPDIR = $ENV{'LONGREADTOPDIR'};
 
+my $Usage = qq!prepare_viewer_files.pl <merge directory name>\n!;
+
+my $verbose = 0; # print out lots of info?
+
+GetOptions( verbose => \$verbose );
+
+$#ARGV==0
+    or die "$Usage";
+
+my $mergedirname = $ARGV[0];
+
 if (!$LONGREADTOPDIR) {
     die "You must set the LONGREADTOPDIR environment variable before running this script!\n";
 }
@@ -27,45 +38,36 @@ if ($LONGREADTOPDIR ne $CURRENTDIR) {
         $ENV{'LONGREADTOPDIR'} = $CURRENTDIR;
     }
     else {
-        print "LONGREADTOPDIR will remain as $TOPDIR!\n";
+        print "LONGREADTOPDIR will remain as $LONGREADTOPDIR!\n";
     }
 }
 our $MERGEDDIR=$LONGREADTOPDIR.'/refgenotype/mergedSVs';
 our $REFGENODIR=$LONGREADTOPDIR.'/refgenotype';
-
-my $Usage = qq!prepare_viewer_files.pl <merge directory name>\n!;
-
-my $verbose = 0; # print out lots of info?
-
-GetOptions( verbose => \$verbose );
-
-$#ARGV==0
-    or die "$Usage";
-
-my $mergedirname = $ARGV[0];
 
 # create necessary directories:
 my $rh_dirs = make_directories($mergedirname);
 
 # project_data files:
 system("$LONGREADTOPDIR/scripts/make_sample_info_file.pl $LONGREADTOPDIR/refgenotype > $rh_dirs->{projectdatadir}/sample_info.txt");
-symlink("$LONGREADTOPDIR/prep/anchor_baits/target_annotations.hg19.sort.bed", "$rh_dirs->{projectdatadir}/target_annotations.hg19.sort.bed");
-symlink("$LONGREADTOPDIR/prep/aliases/target_aliases.txt", "$rh_dirs->{projectdatadir}/target_aliases.txt");
-symlink("$LONGREADTOPDIR/prep/sva_baits/ref_and_nonref_target_regions.withgenes.hg19.bed", "$rh_dirs->{projectdatadir}/ref_and_nonref_target_regions.withgenes.hg19.bed");
+# tab-delimited file with: chrom, start, end, annotationtype (for coloring and display along ref in read view)
+symlink("$LONGREADTOPDIR/prep/anchor_baits/target_annotations.bed", "$rh_dirs->{projectdatadir}/target_annotations.bed");
+# tab-delimited file with: target name, alias
+symlink("$LONGREADTOPDIR/prep/target_aliases.txt", "$rh_dirs->{projectdatadir}/target_aliases.txt");
+symlink("$LONGREADTOPDIR/prep/ref_and_nonref_target_regions.withgenes.bed", "$rh_dirs->{projectdatadir}/ref_and_nonref_target_regions.withgenes.bed");
 
 # sample_data bam links:
 opendir SAMPLES, "$LONGREADTOPDIR/refgenotype"
     or die "Couldn\'t open directory $LONGREADTOPDIR/refgenotype for reading: $!\n";
 
-my @sampledirs = grep { -e "$LONGREADTOPDIR/refgenotype/$_/allele_aligns/$_.hg19.converted.sort.bam" } readdir SAMPLES;
+my @sampledirs = grep { -e "$LONGREADTOPDIR/refgenotype/$_/allele_aligns/$_.genome.converted.sort.bam" } readdir SAMPLES;
 closedir SAMPLES;
 
 foreach my $sampledir (@sampledirs) {
-    if (!(-e "$rh_dirs->{sampledatadir}/$sampledir.hg19.converted.sort.bam")) {
-        symlink("$LONGREADTOPDIR/refgenotype/$sampledir/allele_aligns/$sampledir.hg19.converted.sort.bam", "$rh_dirs->{sampledatadir}/$sampledir.hg19.converted.sort.bam");
+    if (!(-e "$rh_dirs->{sampledatadir}/$sampledir.genome.converted.sort.bam")) {
+        symlink("$LONGREADTOPDIR/refgenotype/$sampledir/allele_aligns/$sampledir.genome.converted.sort.bam", "$rh_dirs->{sampledatadir}/$sampledir.genome.converted.sort.bam");
     }
-    if (!(-e "$rh_dirs->{sampledatadir}/$sampledir.hg19.converted.sort.bam.bai")) {
-        symlink("$LONGREADTOPDIR/refgenotype/$sampledir/allele_aligns/$sampledir.hg19.converted.sort.bam.bai", "$rh_dirs->{sampledatadir}/$sampledir.hg19.converted.sort.bam.bai");
+    if (!(-e "$rh_dirs->{sampledatadir}/$sampledir.genome.converted.sort.bam.bai")) {
+        symlink("$LONGREADTOPDIR/refgenotype/$sampledir/allele_aligns/$sampledir.genome.converted.sort.bam.bai", "$rh_dirs->{sampledatadir}/$sampledir.genome.converted.sort.bam.bai");
     }
 }
 
@@ -195,12 +197,6 @@ close HAPINFO;
 close SVVCF;
 close SVINFO;
 close HAPCOUNTS;
-
-#target merged svs.vcf
-#target_genotypes.txt
-#
-#my $correctedreads_fasta_file = "$MERGEDDIR/$mergedirname/altalleleinfo/$element_id.correctedreads.fasta";
-#write_corrected_read_fasta($rh_hap_reads, $correctedreads_fasta_file, $REFGENODIR);
 
 ########END MAIN#######
 
