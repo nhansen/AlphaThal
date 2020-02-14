@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export DIRNAME=$1 # this is a subdirectory of the mergedSVs directory for the project
+
+export PERL5LIB=/home/nhansen/SVanalyzer/lib:$PERL5LIB
+
+export SCRIPTSDIR=$LONGREADTOPDIR/scripts
+export REFGENODIR=$LONGREADTOPDIR/refgenotype
+
+cd $LONGREADTOPDIR
+
+$SCRIPTSDIR/prepare_viewer_files.pl $DIRNAME
