@@ -7,9 +7,7 @@ use Getopt::Long;
 use strict;
 
 our $SRAFILE = '/data/nhansen/HERV_K_catalog/SRAHumanPacBioWGSRuns.linux.051119.txt';
-our $SCRIPTSDIR='/data/nhansen/HERV_K_catalog/discovery2/scripts';
 our $GENOMESIZE=3095693983;
-#our $REFGENOTYPEDIR= '/data/nhansen/HERV_K_catalog/discovery2/refgenotype';
 
 my $Usage = qq!make_sample_info_file.pl <refgenotype directory>\n!;
 
