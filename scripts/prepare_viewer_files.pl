@@ -1,8 +1,8 @@
 #!/usr/local/bin/perl -w
 #
 # Script to gather all necessary files for the long read viewer into 
-# three directories: a "project_data" directory, a "sample_data" 
-# directory, and a "haplotype_data" directory.
+# three directories: a "projectdata" directory, a "sampledata" 
+# directory, and a "haplotypedata" directory.
 
 use File::Path qw( make_path );
 use Getopt::Long;
@@ -47,7 +47,7 @@ our $REFGENODIR=$LONGREADTOPDIR.'/refgenotype';
 # create necessary directories:
 my $rh_dirs = make_directories($mergedirname);
 
-# project_data files:
+# projectdata files:
 system("$LONGREADTOPDIR/scripts/make_sample_info_file.pl $LONGREADTOPDIR/refgenotype > $rh_dirs->{projectdatadir}/sample_info.txt");
 # tab-delimited file with: chrom, start, end, annotationtype (for coloring and display along ref in read view)
 symlink("$LONGREADTOPDIR/prep/anchor_baits/target_annotations.bed", "$rh_dirs->{projectdatadir}/target_annotations.bed");
@@ -55,7 +55,7 @@ symlink("$LONGREADTOPDIR/prep/anchor_baits/target_annotations.bed", "$rh_dirs->{
 symlink("$LONGREADTOPDIR/prep/target_aliases.txt", "$rh_dirs->{projectdatadir}/target_aliases.txt");
 symlink("$LONGREADTOPDIR/prep/ref_and_nonref_target_regions.withgenes.bed", "$rh_dirs->{projectdatadir}/ref_and_nonref_target_regions.withgenes.bed");
 
-# sample_data bam links:
+# sampledata bam links:
 opendir SAMPLES, "$LONGREADTOPDIR/refgenotype"
     or die "Couldn\'t open directory $LONGREADTOPDIR/refgenotype for reading: $!\n";
 
@@ -71,7 +71,7 @@ foreach my $sampledir (@sampledirs) {
     }
 }
 
-# haplotype_data files:
+# haplotypedata files:
 opendir HAPS, "$MERGEDDIR/$mergedirname/altalleleinfo"
     or die "Couldn\'t open directory $MERGEDDIR/$mergedirname/altalleleinfo for reading: $!\n";
 
@@ -210,13 +210,13 @@ sub make_directories {
    
     ($directories{'viewerdir'}) = (-e "$mergedir/viewerfiles") ? "$mergedir/viewerfiles" : make_path "$mergedir/viewerfiles";
 
-    my $projectdatadir = "$mergedir/viewerfiles/project_data"; 
+    my $projectdatadir = "$mergedir/viewerfiles/projectdata"; 
     ($directories{'projectdatadir'}) = (-e "$projectdatadir") ? "$projectdatadir" : make_path "$projectdatadir";
 
-    my $sampledir = "$mergedir/viewerfiles/sample_data"; 
+    my $sampledir = "$mergedir/viewerfiles/sampledata"; 
     ($directories{'sampledatadir'}) = (-e "$sampledir") ? "$sampledir" : make_path "$sampledir";
 
-    my $haplotypedir = "$mergedir/viewerfiles/haplotype_data"; 
+    my $haplotypedir = "$mergedir/viewerfiles/haplotypedata"; 
     ($directories{'haplotypedatadir'}) = (-e "$haplotypedir") ? "$haplotypedir" : make_path "$haplotypedir";
 
     return {%directories};
