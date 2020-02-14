@@ -50,7 +50,7 @@ my $rh_dirs = make_directories($mergedirname);
 # projectdata files:
 system("$LONGREADTOPDIR/scripts/make_sample_info_file.pl $LONGREADTOPDIR/refgenotype > $rh_dirs->{projectdatadir}/sample_info.txt");
 # tab-delimited file with: chrom, start, end, annotationtype (for coloring and display along ref in read view)
-symlink("$LONGREADTOPDIR/prep/anchor_baits/target_annotations.bed", "$rh_dirs->{projectdatadir}/target_annotations.bed");
+symlink("$LONGREADTOPDIR/prep/target_annotations.bed", "$rh_dirs->{projectdatadir}/target_annotations.bed");
 # tab-delimited file with: target name, alias
 symlink("$LONGREADTOPDIR/prep/target_aliases.txt", "$rh_dirs->{projectdatadir}/target_aliases.txt");
 symlink("$LONGREADTOPDIR/prep/ref_and_nonref_target_regions.withgenes.bed", "$rh_dirs->{projectdatadir}/ref_and_nonref_target_regions.withgenes.bed");
