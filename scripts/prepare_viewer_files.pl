@@ -226,7 +226,7 @@ sub create_projectdata_files {
 
     # colors for annotation elements:
     my @annot_colors = ("red", "pink", "orange", "blue", "purple", "brown", "yellow");
-    my $command = "awk '{print \$1}' $LONGREADTOPDIR/prep/target_annotations.bed | sort | uniq | ";
+    my $command = "awk '{print \$4}' $LONGREADTOPDIR/prep/target_annotations.bed | sort | uniq | ";
     open ANNOTS, $command
         or die "Couldn\'t open $command for execution: $!\n";
 
