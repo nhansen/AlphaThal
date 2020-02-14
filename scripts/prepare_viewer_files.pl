@@ -48,12 +48,7 @@ our $REFGENODIR=$LONGREADTOPDIR.'/refgenotype';
 my $rh_dirs = make_directories($mergedirname);
 
 # projectdata files:
-system("$LONGREADTOPDIR/scripts/make_sample_info_file.pl $LONGREADTOPDIR/refgenotype > $rh_dirs->{projectdatadir}/sample_info.txt");
-# tab-delimited file with: chrom, start, end, annotationtype (for coloring and display along ref in read view)
-symlink("$LONGREADTOPDIR/prep/target_annotations.bed", "$rh_dirs->{projectdatadir}/target_annotations.bed");
-# tab-delimited file with: target name, alias
-symlink("$LONGREADTOPDIR/prep/target_aliases.txt", "$rh_dirs->{projectdatadir}/target_aliases.txt");
-symlink("$LONGREADTOPDIR/prep/ref_and_nonref_target_regions.withgenes.bed", "$rh_dirs->{projectdatadir}/ref_and_nonref_target_regions.withgenes.bed");
+create_projectdata_files($rh_dirs);
 
 # sampledata bam links:
 opendir SAMPLES, "$LONGREADTOPDIR/refgenotype"
@@ -220,6 +215,42 @@ sub make_directories {
     ($directories{'haplotypedatadir'}) = (-e "$haplotypedir") ? "$haplotypedir" : make_path "$haplotypedir";
 
     return {%directories};
+}
+
+sub create_projectdata_files {
+    my $rh_dirs = shift;
+
+    system("$LONGREADTOPDIR/scripts/make_sample_info_file.pl $LONGREADTOPDIR/refgenotype > $rh_dirs->{projectdatadir}/sample_info.txt");
+    # tab-delimited file with: chrom, start, end, annotationtype (for coloring and display along ref in read view)
+    symlink("$LONGREADTOPDIR/prep/target_annotations.bed", "$rh_dirs->{projectdatadir}/target_annotations.bed");
+
+    # colors for annotation elements:
+    my @annot_colors = ("red", "pink", "orange", "blue", "purple", "brown", "yellow");
+    my $command = "awk '{print \$1}' $LONGREADTOPDIR/prep/target_annotations.bed | sort | uniq | ";
+    open ANNOTS, $command
+        or die "Couldn\'t open $command for execution: $!\n";
+
+    my $annotcolorfile = "$rh_dirs->{projectdatadir}/annotation_colors.txt";
+    open ANNOCOLOR, ">$annotcolorfile"
+        or die "Couldn\'t open $annotcolorfile for writing: $!\n";
+
+    my @remaining_colors = @annot_colors;
+    while (<ANNOTS>) {
+        chomp;
+        my $annot = $_;
+        if (!@remaining_colors) {
+            @remaining_colors = @annot_colors;
+        }
+        my $color = shift @remaining_colors;
+        print ANNOCOLOR "$annot\t$color\n";
+    }
+    close ANNOTS;
+    close ANNOCOLOR;
+
+    # tab-delimited file with: target name, alias
+    symlink("$LONGREADTOPDIR/prep/target_aliases.txt", "$rh_dirs->{projectdatadir}/target_aliases.txt");
+    symlink("$LONGREADTOPDIR/prep/ref_and_nonref_target_regions.withgenes.bed", "$rh_dirs->{projectdatadir}/ref_and_nonref_target_regions.withgenes.bed");
+
 }
 
 sub read_target_positions {
