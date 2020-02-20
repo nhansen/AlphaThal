@@ -10,6 +10,7 @@ use Getopt::Long;
 use strict;
 
 our $LONGREADTOPDIR = $ENV{'LONGREADTOPDIR'};
+our $CMTHRESH = 0.02; # cross_match scores of reads to haplotypes are considered equivalent if they are this close, percentage-wise
 
 my $Usage = qq!prepare_viewer_files.pl <merge directory name>\n!;
 
@@ -71,6 +72,7 @@ opendir HAPS, "$MERGEDDIR/$mergedirname/altalleleinfo"
     or die "Couldn\'t open directory $MERGEDDIR/$mergedirname/altalleleinfo for reading: $!\n";
 
 my @althap_fastas = grep /\.althaps.fasta$/, readdir HAPS;
+@althap_fastas = sort @althap_fastas;
 closedir HAPS;
 
 open HAPINFO, ">$rh_dirs->{haplotypedatadir}/target_haplotype_info.txt"
@@ -166,7 +168,15 @@ foreach my $althapfasta (sort @althap_fastas) {
             if (/^ALIGNMENT\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+C{0,1}\s*(\S+)/) {
                 my ($score, $read, $hap) = ($1, $2, $3);
                 my ($sample, $readname) = ($read =~ /(\S+):(\S+)/) ? ($1, $2) : ('NA', 'NA');
-                if (!$max_score{$sample} || !$max_score{$sample}->{$readname} || 
+                # if score is comparable to that for another haplotype, throw read into indeterminate count:
+                if ($max_score{$sample} && $max_score{$sample}->{$readname} && 
+                    close_value($max_score{$sample}->{$readname}, $score)) {
+                    $max_score{$sample}->{$readname} = ($score > $max_score{$sample}->{$readname}) ? $score :
+                                                        $max_score{$sample}->{$readname};
+                    $max_match{$sample}->{$readname} = 'Und';
+
+                }
+                elsif (!$max_score{$sample} || !$max_score{$sample}->{$readname} || 
                       $max_score{$sample}->{$readname} < $score) {
                     $max_score{$sample}->{$readname} = $score;
                     $max_match{$sample}->{$readname} = $hap;
@@ -181,8 +191,25 @@ foreach my $althapfasta (sort @althap_fastas) {
                 print "$sample $readname matches $hap\n";
                 $hap_counts{$hap}++;
             }
-            my $hapstring = join '/', keys %hap_counts;
-            my $countstring = join '/', values %hap_counts;
+            my @sorted_haps = sort byhap keys %hap_counts;
+            my @sorted_counts = map { $hap_counts{$_} } @sorted_haps;
+
+            sub byhap {
+                if ($b =~ /\.REF$/) {
+                   return 1;
+                }
+                if ($a =~ /\.REF$/) {
+                   return -1;
+                }
+
+                my $alt_a = ($a =~ /ALT(\d+)$/) ? $1 : 0;
+                my $alt_b = ($b =~ /ALT(\d+)$/) ? $1 : 0;
+
+                return $alt_a <=> $alt_b;
+            }
+
+            my $hapstring = join '/', @sorted_haps;
+            my $countstring = join '/', @sorted_counts;
             print HAPCOUNTS "$element_id\t$sample\t$hapstring\t$countstring\n";
         }
     }
@@ -268,4 +295,15 @@ sub read_target_positions {
     close TARGETS;
 
     return %target_data;
+}
+
+sub close_value {
+    my $value1 = shift;
+    my $value2 = shift;
+
+    my $perc_diff = ($value1 > $value2) ? 2*($value1 - $value2)/($value1 + $value2) : 2*($value2 - $value1)/($value2 + $value1);
+
+    my $close = ($perc_diff < $CMTHRESH) ? 1 : 0;
+
+    return $close;
 }
