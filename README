@@ -71,5 +71,3 @@ this sample will be written.
 4. To use fasta files of long reads contained in a directory, use the "localfastadir" option:
 
 $LONGREADTOPDIR/scripts/run_longread_pipeline.pl --flankseqs $LONGREADTOPDIR/prep/ref_and_nonref.flank.fasta --baitregions $LONGREADTOPDIR/prep/all_baits.bed --scripts $LONGREADTOPDIR/scripts/localfastadir /path/to/myfastafiles <BIOSAMPLE> <SAMPLE DIRECTORY>
-
-
